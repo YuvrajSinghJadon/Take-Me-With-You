@@ -1,0 +1,61 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vite/Frontend specific files
+dist/
+!.env.*.local
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+.env.*.local.*
+
+# Dependency directories
+node_modules/
+.pnp/
+.pnp.js
+.pnpm-debug.log
+
+# Cache
+.cache/
+.vite/
+
+# Optional IDE/project-specific files
+.idea/
+.vscode/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Ignore coverage reports
+coverage/
+*.lcov
+
+# Build output
+build/
+dist/
+
+# Debug files
+debug.log
+*.stackdump
+
+# OS-specific files
+Thumbs.db
+.DS_Store
+
+# JetBrains IDE files
+*.iml
+.idea/
+out/
