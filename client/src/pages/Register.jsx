@@ -30,7 +30,7 @@ const Register = () => {
     try {
       // Send registration request to the backend
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/auth/register`,
+        `${import.meta.env.VITE_API_URL}/auth/register`,
         {
           firstName: data.firstName,
           lastName: data.lastName,

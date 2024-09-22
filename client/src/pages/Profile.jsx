@@ -25,7 +25,7 @@ const Profile = () => {
     try {
       // Fetch user info
       const userResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL}/users/get-user/${id}`,
+        `${import.meta.env.VITE_API_URL}/users/get-user/${id}`,
         {},
         {
           headers: {

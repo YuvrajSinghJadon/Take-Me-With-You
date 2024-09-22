@@ -22,7 +22,7 @@ const ResetPassword = () => {
 
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/users/request-passwordreset`,
+        `${import.meta.env.VITE_API_URL}/users/request-passwordreset`,
         {
           email: data.email,
         }
