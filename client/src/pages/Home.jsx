@@ -63,25 +63,30 @@ const Home = () => {
       setPosting(true);
       const token = localStorage.getItem("token");
 
-      const formData = new FormData();
-      formData.append("description", data.description);
-      formData.append("startDate", data.startDate);
-      formData.append("estimatedDays", data.estimatedDays);
-      formData.append("destinations", JSON.stringify(data.destinations));
-      if (file) formData.append("image", file);
+      // Create a simple object with post data (no FormData needed since no files are being uploaded)
+      const postData = {
+        description: data.description,
+        startDate: data.startDate,
+        estimatedDays: data.estimatedDays,
+      };
 
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/posts/create-post`,
-        formData,
+        `${import.meta.env.VITE_API_URL}/posts/create-post`,
+        postData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
+            "Content-Type": "application/json",
           },
         }
       );
-      alert("Post created successfully!");
-      fetchPosts(); // Refresh posts after creating a new one
+
+      if (response.data.success) {
+        alert("Post created successfully!");
+        fetchPosts(); // Refresh posts after creating a new one
+      } else {
+        setErrMsg("Failed to create post. Please try again.");
+      }
     } catch (error) {
       console.error("Failed to create post:", error);
       setErrMsg("Failed to create post. Please try again.");
@@ -170,7 +175,7 @@ const Home = () => {
                   }
                 />
 
-                <TextInput
+                {/* <TextInput
                   styles="w-full rounded-full"
                   placeholder="Destinations (comma separated)"
                   name="destinations"
@@ -178,7 +183,7 @@ const Home = () => {
                     required: "At least one destination is required",
                   })}
                   error={errors.destinations ? errors.destinations.message : ""}
-                />
+                /> */}
               </div>
 
               {errMsg && (

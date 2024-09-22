@@ -5,23 +5,22 @@ import mongoose from "mongoose";
 // Create a Post
 export const createPost = async (req, res) => {
   try {
-    const { userId } = req.body.user;
-    const { description, image, startDate, estimatedDays, destinations } =
-      req.body;
+    const { userId } = req.body.user; // Extract userId from authenticated user
+    const { description, startDate, estimatedDays } = req.body;
 
+    // Ensure required fields are present
     if (!description) {
       return res
         .status(400)
         .json({ message: "You must provide a description" });
     }
 
+    // Create new post entry in the database
     const post = await Posts.create({
       userId,
       description,
-      image,
       startDate,
       estimatedDays,
-      destinations,
     });
 
     res.status(201).json({
