@@ -174,36 +174,28 @@ export const changePassword = async (req, res, next) => {
   }
 };
 
-export const getUser = async (req, res, next) => {
+// Controller to get user by ID
+export const getUserById = async (req, res) => {
   try {
-    const { userId } = req.body.user;
     const { id } = req.params;
 
-    const user = await Users.findById(id ?? userId).populate({
-      path: "friends",
-      select: "-password",
-    });
+    // Assuming you have a User model
+    const user = await Users.findById(id).select("-password"); // Exclude the password field
 
     if (!user) {
-      return res.status(200).send({
-        message: "User Not Found",
+      return res.status(404).json({
         success: false,
+        message: "User not found",
       });
     }
 
-    user.password = undefined;
-
     res.status(200).json({
       success: true,
-      user: user,
+      user,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "auth error",
-      success: false,
-      error: error.message,
-    });
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Server error. Please try again." });
   }
 };
 

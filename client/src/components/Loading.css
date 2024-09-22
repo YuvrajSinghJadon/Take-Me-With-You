@@ -1,0 +1,40 @@
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full screen height */
+}
+
+.loading-dot {
+  width: 15px;
+  height: 15px;
+  margin: 0 8px;
+  border-radius: 50%;
+  background-color: #6366f1; /* Aesthetic purple color */
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.loading-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+.loading-dot:nth-child(4) {
+  animation-delay: 0.6s;
+}
+.loading-dot:nth-child(5) {
+  animation-delay: 0.8s;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}

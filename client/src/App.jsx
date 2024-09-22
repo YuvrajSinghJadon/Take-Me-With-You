@@ -4,11 +4,11 @@ import { Home, Login, Profile, Register, ResetPassword } from "./pages"; // Impo
 
 // Layout Component that checks for user authentication
 function Layout() {
-  const { user } = useSelector((state) => state.user); // Get user from Redux state
+  const { token } = useSelector((state) => state.user); // Get token directly from Redux state
   const location = useLocation(); // For redirecting back to the page user was trying to access
 
-  // Check if user is authenticated by checking if token exists
-  return user?.token ? (
+  // Check if token exists
+  return token ? (
     <Outlet /> // If token exists, allow access to the protected routes
   ) : (
     <Navigate to="/login" state={{ from: location }} replace /> // Redirect to login if not authenticated

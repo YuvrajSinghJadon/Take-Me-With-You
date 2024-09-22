@@ -25,7 +25,7 @@ router.post("/", userAuth, getPosts);
 router.post("/:id", userAuth, getPost);
 
 // Get all posts by a specific user
-router.post("/get-user-post/:id", userAuth, getUserPost);
+router.get("/get-user-post/:id", getUserPost); // Changed from POST to GET
 
 // Get comments for a post
 router.get("/comments/:postId", userAuth, getComments);

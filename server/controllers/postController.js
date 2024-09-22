@@ -5,22 +5,22 @@ import mongoose from "mongoose";
 // Create a Post
 export const createPost = async (req, res) => {
   try {
-    const { userId } = req.body.user; // Extract userId from authenticated user
-    const { description, startDate, estimatedDays } = req.body;
+    const { userId } = req.body.user;
+    const { description, startDate, estimatedDays, destinations } = req.body;
 
-    // Ensure required fields are present
     if (!description) {
       return res
         .status(400)
         .json({ message: "You must provide a description" });
     }
 
-    // Create new post entry in the database
+    // Create the post with the destinations array
     const post = await Posts.create({
       userId,
       description,
       startDate,
       estimatedDays,
+      destinations, // Array of destinations is directly stored
     });
 
     res.status(201).json({
@@ -29,7 +29,7 @@ export const createPost = async (req, res) => {
       data: post,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: "Server error. Please try again." });
   }
 };
@@ -88,7 +88,7 @@ export const getPost = async (req, res) => {
 // Get User's Posts by userId
 export const getUserPost = async (req, res) => {
   try {
-    const { userId } = req.params; // Assuming you're passing userId as a URL parameter
+    const { id: userId } = req.params; // Correctly fetch userId from params
 
     // Fetch posts where userId matches the passed userId
     const posts = await Posts.find({ userId })
@@ -98,7 +98,7 @@ export const getUserPost = async (req, res) => {
       })
       .sort({ _id: -1 });
 
-    // Check if posts exist
+    // Return response, even if no posts are found
     if (!posts.length) {
       return res.status(200).json({
         success: true,

@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { CustomButton, Loading, TextInput } from "../components";
 import LoginBackground from "../assets/LoginBackground.png";
 import Logo1 from "../assets/Logo1.png";
+import { UserLogin } from "../redux/userSlice"; // Import the UserLogin action
+
 import axios from "axios";
 
 const Login = () => {
@@ -38,14 +40,11 @@ const Login = () => {
 
       const { token, user } = response.data;
 
-      // Store JWT token in localStorage or sessionStorage
-      localStorage.setItem("token", token);
+      // Dispatch the UserLogin action with both user and token
+      dispatch(UserLogin(user, token));
 
-      // Dispatch login action to Redux or handle user state in context
-      dispatch({
-        type: "USER_LOGIN_SUCCESS",
-        payload: user,
-      });
+      // Log where the user will be redirected
+      console.log("Redirecting to:", from);
 
       // Redirect to the previous page or home after successful login
       navigate(from, { replace: true });

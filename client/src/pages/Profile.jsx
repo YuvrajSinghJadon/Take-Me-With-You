@@ -19,32 +19,31 @@ const Profile = () => {
   const [loading, setLoading] = useState(true); // Loading state for fetching data
   const [errMsg, setErrMsg] = useState(""); // Error message
 
-  // Function to fetch user info and posts by userId (profile id)
   const fetchProfileData = async () => {
     setLoading(true);
     try {
       // Fetch user info
-      const userResponse = await axios.post(
+      const userResponse = await axios.get(
         `${import.meta.env.VITE_API_URL}/users/get-user/${id}`,
-        {},
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
+
       setUserInfo(userResponse.data.user);
 
       // Fetch user posts
-      const postResponse = await axios.post(
+      const postResponse = await axios.get(
         `${import.meta.env.VITE_API_URL}/posts/get-user-post/${id}`,
-        {},
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
+
       setPosts(postResponse.data.data); // Update posts state
     } catch (error) {
       console.error("Error fetching profile data:", error);
@@ -62,7 +61,7 @@ const Profile = () => {
   // Handle deleting a post
   const handleDelete = async (postId) => {
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/posts/${postId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -93,7 +92,6 @@ const Profile = () => {
       alert("Failed to send join request. Try again.");
     }
   };
-
   return (
     <>
       <div className="home w-full px-0 lg:px-10 pb-20 2xl:px-40 bg-bgColor lg:rounded-lg h-screen overflow-hidden">
@@ -121,7 +119,12 @@ const Profile = () => {
                   key={post?._id}
                   user={user}
                   deletePost={() => handleDelete(post?._id)}
-                  joinTrip={() => handleJoinTrip(post?._id)}
+                  // Conditional rendering: show "Join Trip" button only if viewing someone else's profile
+                  joinTrip={
+                    userInfo?._id !== user?._id
+                      ? () => handleJoinTrip(post?._id)
+                      : null
+                  }
                 />
               ))
             ) : (
@@ -130,7 +133,6 @@ const Profile = () => {
               </div>
             )}
           </div>
-
           {/* RIGHT SIDE */}
           <div className="hidden w-1/4 h-full lg:flex flex-col gap-8 overflow-y-auto">
             {userInfo && <FriendsCard friends={userInfo?.friends} />}

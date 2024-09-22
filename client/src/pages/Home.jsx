@@ -63,13 +63,20 @@ const Home = () => {
       setPosting(true);
       const token = localStorage.getItem("token");
 
-      // Create a simple object with post data (no FormData needed since no files are being uploaded)
+      // Convert the comma-separated string into an array
+      const destinationsArray = data.destinations
+        .split(",")
+        .map((destination) => destination.trim()); // Trim any extra spaces
+
+      // Prepare the post data with the destinations array
       const postData = {
         description: data.description,
         startDate: data.startDate,
         estimatedDays: data.estimatedDays,
+        destinations: destinationsArray, // Send array of destinations to the backend
       };
 
+      // Send POST request to backend
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/create-post`,
         postData,
@@ -83,7 +90,7 @@ const Home = () => {
 
       if (response.data.success) {
         alert("Post created successfully!");
-        fetchPosts(); // Refresh posts after creating a new one
+        fetchPosts(); // Refresh the posts list
       } else {
         setErrMsg("Failed to create post. Please try again.");
       }
@@ -99,7 +106,7 @@ const Home = () => {
   const joinTrip = async (postId) => {
     try {
       await axios.post(
-        `${process.env.REACT_APP_API_URL}/posts/join-request/${postId}`,
+        `${import.meta.env.VITE_API_URL}/posts/join-request/${postId}`,
         {},
         {
           headers: {
@@ -175,7 +182,7 @@ const Home = () => {
                   }
                 />
 
-                {/* <TextInput
+                <TextInput
                   styles="w-full rounded-full"
                   placeholder="Destinations (comma separated)"
                   name="destinations"
@@ -183,7 +190,7 @@ const Home = () => {
                     required: "At least one destination is required",
                   })}
                   error={errors.destinations ? errors.destinations.message : ""}
-                /> */}
+                />
               </div>
 
               {errMsg && (

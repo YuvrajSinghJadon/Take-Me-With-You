@@ -5,7 +5,7 @@ import {
   changePassword,
   friendRequest,
   getFriendRequest,
-  getUser,
+  getUserById,
   profileViews,
   requestPasswordReset,
   resetPassword,
@@ -26,7 +26,8 @@ router.get("/reset-password/:userId/:token", resetPassword);
 router.post("/reset-password", changePassword);
 
 // User-related routes
-router.post("/get-user/:id?", userAuth, getUser);
+// GET user by ID
+router.get('/get-user/:id', userAuth, getUserById);
 router.put("/update-user", userAuth, updateUser);
 
 // Friend requests

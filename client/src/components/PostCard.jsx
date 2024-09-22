@@ -121,7 +121,7 @@ const CommentForm = ({ user, id, replyAt, getComments }) => {
   );
 };
 
-const PostCard = ({ post, user, deletePost, joinTrip, postQuery }) => {
+const PostCard = ({ post, user, deletePost, joinTrip }) => {
   const [showQueries, setShowQueries] = useState(0);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -137,7 +137,8 @@ const PostCard = ({ post, user, deletePost, joinTrip, postQuery }) => {
       setLoading(false);
     }
   };
-
+  console.log("userID", user?._id);
+  console.log(post?.userId?._id);
   return (
     <div className="mb-2 bg-primary p-4 rounded-xl">
       <div className="flex gap-3 items-center mb-2">
@@ -186,13 +187,17 @@ const PostCard = ({ post, user, deletePost, joinTrip, postQuery }) => {
 
       {/* JOIN and QUERIES Buttons */}
       <div className="mt-4 flex justify-between items-center px-3 py-2 text-ascent-2 text-base border-t border-[#66666645]">
-        <p
-          className="flex gap-2 items-center text-base cursor-pointer"
-          onClick={() => joinTrip(post._id)}
-        >
-          <FaUserPlus size={20} />
-          Request to Join
-        </p>
+        {/* Show "Request to Join" only if the logged-in user is not the post owner */}
+        {user?._id !== post?.userId?._id && (
+          <p
+            className="flex gap-2 items-center text-base cursor-pointer"
+            onClick={() => joinTrip(post._id)}
+          >
+            <FaUserPlus size={20} />
+            Request to Join
+          </p>
+        )}
+
         <p
           className="flex gap-2 items-center text-base cursor-pointer"
           onClick={() => {
@@ -203,6 +208,8 @@ const PostCard = ({ post, user, deletePost, joinTrip, postQuery }) => {
           <BiComment size={20} />
           {post?.comments?.length} Queries
         </p>
+
+        {/* Show Delete button if the logged-in user is the post owner */}
         {user?._id === post?.userId?._id && (
           <div
             className="flex gap-1 items-center text-base text-ascent-1 cursor-pointer"
