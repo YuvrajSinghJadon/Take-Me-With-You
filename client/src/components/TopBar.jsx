@@ -1,5 +1,6 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import TextInput from "./TextInput";
 import CustomButton from "./CustomButton";
@@ -9,10 +10,12 @@ import { IoMdNotificationsOutline } from "react-icons/io";
 import { SetTheme } from "../redux/theme";
 import { Logout } from "../redux/userSlice";
 import Logo1 from "../assets/Logo1.png"; // Import the logo image
+import axios from "axios";
 
 const TopBar = () => {
   const { theme } = useSelector((state) => state.theme);
   const { user } = useSelector((state) => state.user);
+  const [searchResults, setSearchResults] = useState({ users: [], posts: [] });
   const dispatch = useDispatch();
   const {
     register,
@@ -26,7 +29,22 @@ const TopBar = () => {
   };
 
   const handleSearch = async (data) => {
-    // Implement search logic here
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/search`,
+        {
+          params: { q: data.search }, // Send search query as parameter
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      // Set the results in state
+      setSearchResults(response.data);
+    } catch (error) {
+      console.error("Failed to search:", error);
+    }
   };
 
   return (
@@ -85,6 +103,49 @@ const TopBar = () => {
           />
         </div>
       </div>
+
+      {/* Search Results */}
+      {searchResults.users.length > 0 || searchResults.posts.length > 0 ? (
+        <div className="absolute top-12 left-1/2 transform -translate-x-1/2 w-full max-w-2xl bg-white shadow-lg rounded-lg p-4 z-50">
+          <h3 className="text-lg font-semibold">Search Results:</h3>
+
+          <div className="flex flex-col gap-4 mt-4">
+            {/* Display Users */}
+            {searchResults.users.length > 0 && (
+              <div>
+                <h4 className="text-base font-semibold">Users</h4>
+                {searchResults.users.map((user) => (
+                  <Link
+                    key={user._id}
+                    to={`/profile/${user._id}`}
+                    className="block py-2 border-b border-gray-200"
+                  >
+                    {user.firstName} {user.lastName}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Display Posts */}
+            {searchResults.posts.length > 0 && (
+              <div>
+                <h4 className="text-base font-semibold">Posts</h4>
+                {searchResults.posts.map((post) => (
+                  <div key={post._id} className="py-2 border-b border-gray-200">
+                    <p>{post.description}</p>
+                    <Link
+                      to={`/profile/${post.userId._id}`}
+                      className="text-sm text-blue-500"
+                    >
+                      {post.userId.firstName} {post.userId.lastName}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

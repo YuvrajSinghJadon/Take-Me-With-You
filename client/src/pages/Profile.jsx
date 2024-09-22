@@ -37,7 +37,7 @@ const Profile = () => {
 
       // Fetch user posts
       const postResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL}/posts/get-user-post/${id}`,
+        `${import.meta.env.VITE_API_URL}/posts/get-user-post/${id}`,
         {},
         {
           headers: {
@@ -79,7 +79,7 @@ const Profile = () => {
   const handleJoinTrip = async (postId) => {
     try {
       await axios.post(
-        `${process.env.REACT_APP_API_URL}/posts/join-request/${postId}`,
+        `${import.meta.env.VITE_API_URL}/posts/join-request/${postId}`,
         {},
         {
           headers: {

@@ -3,6 +3,7 @@ import express from "express";
 import authRoute from "./authRoutes.js";
 import userRoute from "./userRoutes.js";
 import postRoute from "./postRoutes.js";
+import searchRoutes from "./searchRoutes.js";
 
 const router = express.Router();
 
@@ -14,5 +15,8 @@ router.use(`/users`, userRoute);
 
 // Post routes
 router.use(`/posts`, postRoute);
+
+//Search Routes
+router.use("/", searchRoutes);
 
 export default router;

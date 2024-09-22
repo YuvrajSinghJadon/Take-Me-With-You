@@ -1,7 +1,7 @@
 import Comments from "../models/commentModel.js";
 import Posts from "../models/postModel.js";
 import JoinRequests from "../models/joinRequests.js";
-
+import mongoose from "mongoose";
 // Create a Post
 export const createPost = async (req, res) => {
   try {
@@ -86,18 +86,29 @@ export const getPost = async (req, res) => {
   }
 };
 
-// Get a user's posts by user ID
+// Get User's Posts by userId
 export const getUserPost = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { userId } = req.params; // Assuming you're passing userId as a URL parameter
 
-    const posts = await Posts.find({ userId: id })
+    // Fetch posts where userId matches the passed userId
+    const posts = await Posts.find({ userId })
       .populate({
         path: "userId",
         select: "firstName lastName location profileUrl -password",
       })
       .sort({ _id: -1 });
 
+    // Check if posts exist
+    if (!posts.length) {
+      return res.status(200).json({
+        success: true,
+        message: "No posts found for this user",
+        data: [],
+      });
+    }
+
+    // Return fetched posts
     res.status(200).json({
       success: true,
       message: "User's posts fetched successfully",
