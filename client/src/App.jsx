@@ -1,35 +1,41 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Outlet, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Home, Login, Profile, Register, ResetPassword } from "./pages"; // Import the page components
 
-function App() {
-  const [count, setCount] = useState(0)
+// Layout Component that checks for user authentication
+function Layout() {
+  const { user } = useSelector((state) => state.user); // Get user from Redux state
+  const location = useLocation(); // For redirecting back to the page user was trying to access
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  // Check if user is authenticated by checking if token exists
+  return user?.token ? (
+    <Outlet /> // If token exists, allow access to the protected routes
+  ) : (
+    <Navigate to="/login" state={{ from: location }} replace /> // Redirect to login if not authenticated
+  );
 }
 
-export default App
+// Main App Component
+function App() {
+  const { theme } = useSelector((state) => state.theme); // Get theme from Redux state
+
+  return (
+    <div data-theme={theme} className="w-full min-h-[100vh]">
+      <Routes>
+        {/* Protected Routes: Only accessible when authenticated */}
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} /> {/* Home page */}
+          <Route path="/profile/:id?" element={<Profile />} />{" "}
+          {/* Profile page */}
+        </Route>
+        {/* Public Routes: Accessible without authentication */}
+        <Route path="/register" element={<Register />} /> {/* Register page */}
+        <Route path="/login" element={<Login />} /> {/* Login page */}
+        <Route path="/reset-password" element={<ResetPassword />} />{" "}
+        {/* Reset Password page */}
+      </Routes>
+    </div>
+  );
+}
+
+export default App;
