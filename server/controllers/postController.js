@@ -238,6 +238,79 @@ export const replyPostComment = async (req, res) => {
     res.status(500).json({ message: "Server error. Please try again." });
   }
 };
+//Like or Unlike a comment
+// Like or Unlike a Comment
+export const likeComment = async (req, res) => {
+  try {
+    const { id } = req.params; // Comment ID
+    const { userId } = req.user;
+
+    const comment = await Comments.findById(id);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    // Check if user has already liked the comment
+    if (comment.likes.includes(userId)) {
+      // Unlike the comment
+      comment.likes = comment.likes.filter(
+        (like) => like.toString() !== userId
+      );
+    } else {
+      // Like the comment
+      comment.likes.push(userId);
+    }
+
+    await comment.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Like updated successfully",
+      data: comment,
+    });
+  } catch (error) {
+    console.error("Error liking comment:", error);
+    res.status(500).json({ message: "Server error. Please try again." });
+  }
+};
+
+// Like or Unlike a Reply
+export const likeReply = async (req, res) => {
+  try {
+    const { id, replyId } = req.params; // Comment ID and Reply ID
+    const { userId } = req.user;
+
+    const comment = await Comments.findById(id);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    const reply = comment.replies.id(replyId);
+    if (!reply) {
+      return res.status(404).json({ message: "Reply not found" });
+    }
+
+    // Check if user has already liked the reply
+    if (reply.likes.includes(userId)) {
+      // Unlike the reply
+      reply.likes = reply.likes.filter((like) => like.toString() !== userId);
+    } else {
+      // Like the reply
+      reply.likes.push(userId);
+    }
+
+    await comment.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Like updated successfully",
+      data: reply,
+    });
+  } catch (error) {
+    console.error("Error liking reply:", error);
+    res.status(500).json({ message: "Server error. Please try again." });
+  }
+};
 
 // Delete a Post
 export const deletePost = async (req, res) => {

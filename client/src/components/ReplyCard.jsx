@@ -1,10 +1,36 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { AiOutlineLike, AiFillLike } from "react-icons/ai";
 import moment from "moment";
 import { NoProfile } from "../assets";
+import axios from "axios";
 import { BiComment } from "react-icons/bi";
+const ReplyCard = ({ reply, user, commentId }) => {
+  const [isLiked, setIsLiked] = useState(reply?.likes.includes(user._id));
+  const [likesCount, setLikesCount] = useState(reply?.likes.length);
 
-const ReplyCard = ({ reply, user, handleLike }) => {
+  const handleReplyLike = async () => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/posts/like-reply/${commentId}/${
+          reply._id
+        }`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setIsLiked(!isLiked);
+        setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+      }
+    } catch (error) {
+      console.error("Error liking reply:", error);
+    }
+  };
   return (
     <div className="w-full py-3 ml-12">
       <div className="flex gap-3 items-center mb-1">
@@ -30,18 +56,11 @@ const ReplyCard = ({ reply, user, handleLike }) => {
 
       <div>
         <p className="text-ascent-2">{reply?.comment}</p>
-        <div className="mt-2 flex gap-6">
-          <p
-            className="flex gap-2 items-center text-base text-ascent-2 cursor-pointer"
-            onClick={handleLike}
-          >
-            {reply?.likes?.includes(user?._id) ? (
-              <BiComment size={20} color="blue" />
-            ) : (
-              <BiComment size={20} />
-            )}
-            {reply?.likes?.length} Likes
-          </p>
+        <div className="mt-2 flex items-center gap-3">
+          <button onClick={handleReplyLike} className="flex items-center gap-1">
+            {isLiked ? <AiFillLike size={20} /> : <AiOutlineLike size={20} />}
+            {likesCount}
+          </button>
         </div>
       </div>
     </div>

@@ -11,6 +11,8 @@ import {
   replyPostComment,
   createJoinRequest,
   getJoinRequests,
+  likeComment,
+  likeReply,
 } from "../controllers/postController.js";
 import { upload } from "../middleware/multerMiddleware.js";
 
@@ -27,7 +29,6 @@ router.get("/:id", userAuth, getPost); // Protect this route with userAuth
 // Fetch all posts by a specific user - Authenticated route
 router.get("/get-user-post/:id", userAuth, getUserPost); // Protect this route with userAuth
 
-
 // Get comments for a post
 router.get("/comments/:postId", userAuth, getComments);
 
@@ -36,6 +37,10 @@ router.post("/comment/:id", userAuth, commentPost);
 
 // Reply to a comment
 router.post("/reply-comment/:id", userAuth, replyPostComment);
+
+//Like comments and replies
+router.post("/like-comment/:id", userAuth, likeComment);
+router.post("/like-reply/:id/:replyId", userAuth, likeReply);
 
 // Delete a post
 router.delete("/:id", userAuth, deletePost);
