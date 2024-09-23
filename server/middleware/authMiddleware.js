@@ -4,7 +4,6 @@ import JWT from "jsonwebtoken";
 const userAuth = async (req, res, next) => {
   const authHeader = req?.headers?.authorization;
 
-  // If no token is found in the Authorization header, return an error response
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     console.log("No token or invalid token header");
     return res.status(401).json({
@@ -19,8 +18,8 @@ const userAuth = async (req, res, next) => {
     console.log("Verifying token...");
     const userToken = JWT.verify(token, process.env.JWT_SECRET_KEY); // Verify the token
 
-    req.body.user = {
-      userId: userToken.userId, // Attach user info to the request object
+    req.user = {
+      userId: userToken.userId, // Attach user info to req (not req.body)
     };
 
     console.log("Token verified, proceeding to next middleware...");

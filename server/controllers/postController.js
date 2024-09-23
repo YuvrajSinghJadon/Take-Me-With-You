@@ -1,11 +1,12 @@
 import Comments from "../models/commentModel.js";
 import Posts from "../models/postModel.js";
 import JoinRequests from "../models/joinRequests.js";
-import mongoose from "mongoose";
-// Create a Post
+import { uploadOnCloudinary } from "../utils/uploadFiles.js";
+
+// Create a Posts
 export const createPost = async (req, res) => {
   try {
-    const { userId } = req.body.user;
+    const { userId } = req.user; // Get the authenticated userId from the req object
     const { description, startDate, estimatedDays, destinations } = req.body;
 
     if (!description) {
@@ -14,13 +15,34 @@ export const createPost = async (req, res) => {
         .json({ message: "You must provide a description" });
     }
 
-    // Create the post with the destinations array
+    let imageUrl = null;
+
+    // Check if there's an image file and upload it to Cloudinary
+    if (req.file) {
+      console.log("File path to upload:", req.file.path);
+      const uploadResult = await uploadOnCloudinary(req.file.path);
+      if (uploadResult) {
+        imageUrl = uploadResult.url; // Store the uploaded image URL
+      }
+    }
+    //They below code is to check if multer is working fine.
+    // if (req.file) {
+    //   console.log("File uploaded successfully via Multer:", req.file);
+    //   res.status(201).json({
+    //     success: true,
+    //     message: "File uploaded",
+    //     filePath: req.file.path,
+    //   });
+    // }
+
+    // Create the post with the destinations array and optional image URL
     const post = await Posts.create({
       userId,
       description,
       startDate,
       estimatedDays,
-      destinations, // Array of destinations is directly stored
+      destinations: JSON.parse(destinations), // Parse the destinations array
+      imageUrl, // Store the Cloudinary image URL if available
     });
 
     res.status(201).json({
@@ -29,17 +51,17 @@ export const createPost = async (req, res) => {
       data: post,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error creating post:", error);
     res.status(500).json({ message: "Server error. Please try again." });
   }
 };
 
-// Get Posts
+// Get Posts for Homepage
 export const getPosts = async (req, res) => {
   try {
-    const { userId } = req.body.user;
-    const { search } = req.body;
+    const { search } = req.body; // No need for userId
 
+    // If there's a search query, filter posts based on the description
     const posts = await Posts.find(
       search ? { description: { $regex: search, $options: "i" } } : {}
     )
@@ -47,7 +69,7 @@ export const getPosts = async (req, res) => {
         path: "userId",
         select: "firstName lastName location profileUrl -password",
       })
-      .sort({ _id: -1 });
+      .sort({ _id: -1 }); // Sort posts in descending order (most recent first)
 
     res.status(200).json({
       success: true,
@@ -63,7 +85,7 @@ export const getPosts = async (req, res) => {
 // Get a single post by ID
 export const getPost = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // Extract post ID from URL params
 
     const post = await Posts.findById(id).populate({
       path: "userId",
@@ -80,7 +102,7 @@ export const getPost = async (req, res) => {
       data: post,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching post:", error);
     res.status(500).json({ message: "Server error. Please try again." });
   }
 };
@@ -88,9 +110,9 @@ export const getPost = async (req, res) => {
 // Get User's Posts by userId
 export const getUserPost = async (req, res) => {
   try {
-    const { id: userId } = req.params; // Correctly fetch userId from params
+    const { id: userId } = req.params; // Get the userId from URL params
 
-    // Fetch posts where userId matches the passed userId
+    // Find all posts for this specific user
     const posts = await Posts.find({ userId })
       .populate({
         path: "userId",
@@ -98,7 +120,6 @@ export const getUserPost = async (req, res) => {
       })
       .sort({ _id: -1 });
 
-    // Return response, even if no posts are found
     if (!posts.length) {
       return res.status(200).json({
         success: true,
@@ -107,7 +128,6 @@ export const getUserPost = async (req, res) => {
       });
     }
 
-    // Return fetched posts
     res.status(200).json({
       success: true,
       message: "User's posts fetched successfully",

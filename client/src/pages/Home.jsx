@@ -19,20 +19,19 @@ const Home = () => {
   const [errMsg, setErrMsg] = useState("");
   const [loading, setLoading] = useState(true); // Loading state while fetching posts
 
-  // Function to fetch posts from the backend
+  // Fetch all posts (for homepage)
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(
+      const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/posts`,
-        {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Add JWT token for authorization
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
-      setPosts(response.data.data); // Update posts state with the fetched data
+      setPosts(response.data.data);
     } catch (error) {
       console.error("Error fetching posts:", error);
       setErrMsg("Failed to load posts. Please try again.");

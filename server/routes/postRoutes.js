@@ -15,18 +15,17 @@ import {
 import { upload } from "../middleware/multerMiddleware.js";
 
 const router = express.Router();
-
-// Route for creating a post with optional image
+// Create a post with image
 router.post("/create-post", userAuth, upload.single("image"), createPost);
 
-// Get all posts
-router.post("/", userAuth, getPosts);
+// Fetch all posts (homepage) - Authenticated route
+router.get("/", userAuth, getPosts); // Protect this route with userAuth
 
-// Get a single post by ID
-router.post("/:id", userAuth, getPost);
+// Fetch a single post by ID - Authenticated route
+router.get("/:id", userAuth, getPost); // Protect this route with userAuth
 
-// Get all posts by a specific user
-router.get("/get-user-post/:id", getUserPost); // Changed from POST to GET
+// Fetch all posts by a specific user - Authenticated route
+router.get("/get-user-post/:id", userAuth, getUserPost); // Protect this route with userAuth
 
 // Get comments for a post
 router.get("/comments/:postId", userAuth, getComments);

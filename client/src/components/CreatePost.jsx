@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { BiImages } from "react-icons/bi";
 import { CustomButton, Loading, TextInput } from "../components";
 import { NoProfile } from "../assets";
+
 const CreatePost = ({ fetchPosts, user }) => {
   const [file, setFile] = useState(null); // State for image file
   const [posting, setPosting] = useState(false); // State for form submission
@@ -15,49 +16,48 @@ const CreatePost = ({ fetchPosts, user }) => {
     formState: { errors },
   } = useForm();
 
-  // Handle post submission
   const handlePostSubmit = async (data) => {
     try {
-      setPosting(true);
+      setPosting(true); // Indicate that the form is being submitted
       const token = localStorage.getItem("token");
 
-      // Convert the comma-separated string into an array
+      // Convert the comma-separated destinations into an array
       const destinationsArray = data.destinations
         .split(",")
         .map((destination) => destination.trim());
 
-      // Prepare FormData to send the post data and the optional image
+      // Prepare FormData object for the post data and image
       const formData = new FormData();
       formData.append("description", data.description);
       formData.append("startDate", data.startDate || "");
       formData.append("estimatedDays", data.estimatedDays || 0);
-      formData.append("destinations", JSON.stringify(destinationsArray));
+      formData.append("destinations", JSON.stringify(destinationsArray)); // Send destinations as stringified array
 
       // Append the image file if the user has selected one
       if (file) {
-        formData.append("image", file); // Add image to FormData
+        formData.append("image", file); // Attach image to FormData
       }
 
-      // Debug: Check what is being sent
+      // Debug: Log what's being sent
       for (let [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
       }
 
-      // Send POST request to backend
+      // Send the POST request to the backend
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/create-post`,
         formData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`, // Attach the auth token
+            "Content-Type": "multipart/form-data", // Ensure proper content type
           },
         }
       );
 
       if (response.data.success) {
         alert("Post created successfully!");
-        fetchPosts(); // Refresh posts after successful creation
+        fetchPosts(); // Refresh the posts list after successful creation
       } else {
         setErrMsg("Failed to create post. Please try again.");
       }

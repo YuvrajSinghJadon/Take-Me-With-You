@@ -1,32 +1,26 @@
 import multer from "multer";
+import path from "path";
 
+// Configure Multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "./public/temp");
+    cb(null, "./public/temp"); // Temporary folder for image upload
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname);
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique file name
   },
 });
 
-// Add fileFilter to Multer for image validation
+// Multer file filter (optional, to only allow image uploads)
 const fileFilter = (req, file, cb) => {
-  // Accept images only
   if (!file.mimetype.startsWith("image")) {
-    return cb(new Error("Not an image! Please upload only images."), false);
+    return cb(new Error("Only image files are allowed!"), false);
   }
   cb(null, true);
 };
 
-// Add file size limit and the fileFilter
 export const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB file size limit
-  fileFilter: (req, file, cb) => {
-    console.log("Checking file filter...");
-    if (!file.mimetype.startsWith("image")) {
-      return cb(new Error("Only image files are allowed!"), false); // Allow only image files
-    }
-    cb(null, true);
-  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB file size limit
+  fileFilter,
 });
