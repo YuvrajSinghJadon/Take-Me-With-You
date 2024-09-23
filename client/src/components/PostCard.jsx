@@ -137,8 +137,6 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
       setLoading(false);
     }
   };
-  console.log("userID", user?._id);
-  console.log(post?.userId?._id);
   return (
     <div className="mb-2 bg-primary p-4 rounded-xl">
       <div className="flex gap-3 items-center mb-2">

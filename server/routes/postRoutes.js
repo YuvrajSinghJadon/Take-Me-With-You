@@ -12,11 +12,12 @@ import {
   createJoinRequest,
   getJoinRequests,
 } from "../controllers/postController.js";
+import { upload } from "../middleware/multerMiddleware.js";
 
 const router = express.Router();
 
-// Create a post
-router.post("/create-post", userAuth, createPost);
+// Route for creating a post with optional image
+router.post("/create-post", userAuth, upload.single("image"), createPost);
 
 // Get all posts
 router.post("/", userAuth, getPosts);

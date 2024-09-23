@@ -5,7 +5,7 @@ const postSchema = new mongoose.Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "Users", required: true },
     description: { type: String, required: true },
-    image: { type: String },
+    imageUrl: { type: String },
     startDate: { type: Date }, // If posts involve trips
     estimatedDays: { type: Number }, // For trips, estimate of duration
     destinations: [{ type: String }], // Trip destinations
