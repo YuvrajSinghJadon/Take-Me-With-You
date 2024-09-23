@@ -8,7 +8,8 @@ import {
   PostCard,
   ProfileCard,
   TopBar,
-} from "../components";
+  JoinRequests,
+} from "../components"; // Import the new JoinRequests component
 
 const Profile = () => {
   const { id } = useParams(); // Get the profile ID from the URL
@@ -92,6 +93,7 @@ const Profile = () => {
       alert("Failed to send join request. Try again.");
     }
   };
+
   return (
     <>
       <div className="home w-full px-0 lg:px-10 pb-20 2xl:px-40 bg-bgColor lg:rounded-lg h-screen overflow-hidden">
@@ -133,9 +135,14 @@ const Profile = () => {
               </div>
             )}
           </div>
+
           {/* RIGHT SIDE */}
           <div className="hidden w-1/4 h-full lg:flex flex-col gap-8 overflow-y-auto">
             {userInfo && <FriendsCard friends={userInfo?.friends} />}
+            {/* Join Requests */}
+            {userInfo && posts.length > 0 && (
+              <JoinRequests postId={posts[0]?._id} /> // Pass postId to JoinRequests
+            )}
           </div>
         </div>
       </div>

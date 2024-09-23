@@ -6,7 +6,7 @@ import ProfileCard from "./ProfileCard";
 import FriendsCard from "./FriendsCard";
 import PostCard from "./PostCard";
 import EditProfile from "./EditProfile";
-
+import JoinRequests from "./JoinRequests";
 export {
   Loading,
   TextInput,
@@ -16,4 +16,5 @@ export {
   FriendsCard,
   PostCard,
   EditProfile,
+  JoinRequests,
 };
