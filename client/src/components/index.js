@@ -7,6 +7,7 @@ import FriendsCard from "./FriendsCard";
 import PostCard from "./PostCard";
 import EditProfile from "./EditProfile";
 import JoinRequests from "./JoinRequests";
+import CreatePost from "./CreatePost";
 export {
   Loading,
   TextInput,
@@ -17,4 +18,5 @@ export {
   PostCard,
   EditProfile,
   JoinRequests,
+  CreatePost,
 };
