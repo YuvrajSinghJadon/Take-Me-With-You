@@ -14,6 +14,7 @@ const CreatePost = ({ fetchPosts, user }) => {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm();
 
   const handlePostSubmit = async (data) => {
@@ -57,6 +58,10 @@ const CreatePost = ({ fetchPosts, user }) => {
 
       if (response.data.success) {
         alert("Post created successfully!");
+        // Clear the form fields, including the file input
+        reset(); // This will reset the form fields
+        setFile(null); // Clear the file state
+        document.getElementById("imgUpload").value = null;
         fetchPosts(); // Refresh the posts list after successful creation
       } else {
         setErrMsg("Failed to create post. Please try again.");

@@ -137,6 +137,7 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
       setLoading(false);
     }
   };
+
   return (
     <div className="mb-2 bg-primary p-4 rounded-xl">
       <div className="flex gap-3 items-center mb-2">
@@ -164,6 +165,15 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
 
       {/* Trip Details */}
       <div>
+        {/* Display Post Image */}
+        {post?.imageUrl && (
+          <img
+            src={post?.imageUrl}
+            alt="Post"
+            className="w-full h-64 mt-2 rounded-lg object-top object-contain" // Updated styling to preserve aspect ratio
+          />
+        )}
+
         <p className="text-ascent-2 font-medium">
           Trip Start Date: {post?.startDate}
         </p>
@@ -174,13 +184,6 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
           Destinations: {post?.destinations?.join(", ")}
         </p>
         <p className="text-ascent-2 mt-2">{post?.description}</p>
-        {post?.image && (
-          <img
-            src={post?.image}
-            alt="Post"
-            className="w-full mt-2 rounded-lg"
-          />
-        )}
       </div>
 
       {/* JOIN and QUERIES Buttons */}
