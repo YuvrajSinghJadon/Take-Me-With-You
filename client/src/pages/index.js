@@ -3,5 +3,5 @@ import Home from "./Home";
 import Register from "./Register";
 import Profile from "./Profile";
 import ResetPassword from "./ResetPassword";
-
-export { Login, Home, Register, Profile, ResetPassword };
+import PostDetails from "./PostDetails";
+export { Login, Home, Register, Profile, ResetPassword, PostDetails };

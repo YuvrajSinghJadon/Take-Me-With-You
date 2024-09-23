@@ -1,6 +1,13 @@
 import { Outlet, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Home, Login, Profile, Register, ResetPassword } from "./pages"; // Import the page components
+import {
+  Home,
+  Login,
+  Profile,
+  Register,
+  ResetPassword,
+  PostDetails,
+} from "./pages"; // Import the page components
 
 // Layout Component that checks for user authentication
 function Layout() {
@@ -27,6 +34,7 @@ function App() {
           <Route path="/" element={<Home />} /> {/* Home page */}
           <Route path="/profile/:id?" element={<Profile />} />{" "}
           {/* Profile page */}
+          <Route path="/posts/:id" element={<PostDetails />} />
         </Route>
         {/* Public Routes: Accessible without authentication */}
         <Route path="/register" element={<Register />} /> {/* Register page */}

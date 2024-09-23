@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate for redirection
 import moment from "moment";
 import { NoProfile } from "../assets";
 import { BiComment } from "react-icons/bi"; // For Queries
@@ -16,18 +16,25 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
   const [replyComments, setReplyComments] = useState(0);
   const [showReply, setShowReply] = useState(0);
 
+  const navigate = useNavigate(); // Initialize useNavigate for programmatic navigation
+
   const getComments = async () => {
     setLoading(true);
     try {
-      // Call API to fetch comments for the post
-      setComments(post.comments); // Assume post.comments is an array of comments
+      setComments(post.comments);
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle redirection to post details page
+  const handlePostClick = () => {
+    navigate(`/posts/${post?._id}`); // Redirect to PostDetails page using post ID
+  };
+
   return (
     <div className="mb-2 bg-primary p-4 rounded-xl">
+      {/* Profile Section */}
       <div className="flex gap-3 items-center mb-2">
         <Link to={"/profile/" + post?.userId?._id}>
           <img
@@ -51,16 +58,17 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
         </div>
       </div>
 
-      {/* Trip Details */}
-      <div>
-        {/* Display Post Image */}
+      {/* Clickable Post Section */}
+      <div onClick={handlePostClick} className="cursor-pointer">
+        {/* Post Image */}
         {post?.imageUrl && (
           <img
             src={post?.imageUrl}
             alt="Post"
-            className="w-full h-64 mt-2 rounded-lg object-top object-contain" // Updated styling to preserve aspect ratio
+            className="w-full h-64 mt-2 rounded-lg object-top object-contain"
           />
         )}
+        {/* Post Details */}
         <p className="text-ascent-2 font-medium">
           Trip Start Date: {post?.startDate}
         </p>
@@ -96,6 +104,7 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
           <BiComment size={20} />
           {post?.comments?.length} Queries
         </p>
+
         {/* Show Delete button if the logged-in user is the post owner */}
         {user?._id === post?.userId?._id && (
           <div
