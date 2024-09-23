@@ -43,8 +43,6 @@ const Login = () => {
       // Dispatch the UserLogin action with both user and token
       dispatch(UserLogin(user, token));
 
-      // Log where the user will be redirected
-      console.log("Redirecting to:", from);
 
       // Redirect to the previous page or home after successful login
       navigate(from, { replace: true });

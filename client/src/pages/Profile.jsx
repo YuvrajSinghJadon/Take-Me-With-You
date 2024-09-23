@@ -19,7 +19,6 @@ const Profile = () => {
   const [posts, setPosts] = useState([]); // Store posts for the profile
   const [loading, setLoading] = useState(true); // Loading state for fetching data
   const [errMsg, setErrMsg] = useState(""); // Error message
-
   const fetchProfileData = async () => {
     setLoading(true);
     try {
@@ -140,8 +139,8 @@ const Profile = () => {
           <div className="hidden w-1/4 h-full lg:flex flex-col gap-8 overflow-y-auto">
             {userInfo && <FriendsCard friends={userInfo?.friends} />}
             {/* Join Requests */}
-            {userInfo && posts.length > 0 && (
-              <JoinRequests postId={posts[0]?._id} /> // Pass postId to JoinRequests
+            {user?._id === userInfo?._id && posts.length > 0 && (
+              <JoinRequests postId={posts[0]?._id} /> // Only show join requests if the logged-in user is the post owner
             )}
           </div>
         </div>

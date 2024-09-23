@@ -1,4 +1,3 @@
-// JoinRequests.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Loading from "./Loading"; // Assuming you have a loading component
@@ -29,6 +28,63 @@ const JoinRequests = ({ postId }) => {
 
     fetchJoinRequests();
   }, [postId]);
+
+  // Function to handle accepting the request
+  const acceptRequest = async (requestId) => {
+    try {
+      const response = await axios.post(
+        `${
+          import.meta.env.VITE_API_URL
+        }/posts/accept-join-request/${requestId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // Remove the request from the list
+        setRequests((prevRequests) =>
+          prevRequests.filter((request) => request._id !== requestId)
+        );
+      } else {
+        alert(response.data.message);
+      }
+    } catch (error) {
+      console.error("Error accepting join request:", error);
+      alert("Failed to accept the request. Try again.");
+    }
+  };
+  // Function to handle rejecting the request
+  const rejectRequest = async (requestId) => {
+    try {
+      const response = await axios.post(
+        `${
+          import.meta.env.VITE_API_URL
+        }/posts/reject-join-request/${requestId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // Remove the request from the list
+        setRequests((prevRequests) =>
+          prevRequests.filter((request) => request._id !== requestId)
+        );
+      } else {
+        alert(response.data.message);
+      }
+    } catch (error) {
+      console.error("Error rejecting join request:", error);
+      alert("Failed to reject the request. Try again.");
+    }
+  };
 
   if (loading) {
     return <Loading />; // Show loading spinner if data is still loading
@@ -64,6 +120,22 @@ const JoinRequests = ({ postId }) => {
                 <p className="text-xs text-gray-500">
                   Requested to join {request.postId.title}
                 </p>
+              </div>
+
+              {/* Accept/Reject Buttons */}
+              <div className="flex gap-2">
+                <button
+                  className="text-white px-2 rounded"
+                  onClick={() => acceptRequest(request._id)}
+                >
+                  ✅
+                </button>
+                <button
+                  className=" text-white px-2 py-1 rounded"
+                  onClick={() => rejectRequest(request._id)}
+                >
+                  ❌
+                </button>
               </div>
             </div>
           ))

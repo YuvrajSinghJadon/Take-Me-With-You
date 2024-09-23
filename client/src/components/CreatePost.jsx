@@ -38,12 +38,6 @@ const CreatePost = ({ fetchPosts, user }) => {
       if (file) {
         formData.append("image", file); // Attach image to FormData
       }
-
-      // Debug: Log what's being sent
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-
       // Send the POST request to the backend
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/create-post`,

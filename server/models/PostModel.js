@@ -12,6 +12,7 @@ const postSchema = new mongoose.Schema(
     likes: [{ type: Schema.Types.ObjectId, ref: "Users" }], // Array of users who liked the post
     comments: [{ type: Schema.Types.ObjectId, ref: "Comments" }], // References to comments
     joinRequests: [{ type: Schema.Types.ObjectId, ref: "JoinRequests" }], // Join trip requests if applicable
+    tripMembers: [{ type: Schema.Types.ObjectId, ref: "Users" }],
   },
   { timestamps: true }
 );

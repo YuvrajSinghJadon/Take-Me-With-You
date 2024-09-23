@@ -18,7 +18,8 @@ const Home = () => {
   const [posts, setPosts] = useState([]); // State to store fetched posts
   const [errMsg, setErrMsg] = useState("");
   const [loading, setLoading] = useState(true); // Loading state while fetching posts
-
+  const [joinStatus, setJoinStatus] = useState("");
+  const [showStatus, setShowStatus] = useState(false);
   // Fetch all posts (for homepage)
   const fetchPosts = async () => {
     setLoading(true);
@@ -49,7 +50,7 @@ const Home = () => {
   const joinTrip = async (postId) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/join-request/${postId}`,
         {},
         {
@@ -58,13 +59,30 @@ const Home = () => {
           },
         }
       );
-      alert("Request to join the trip has been sent!");
+      // Handle different responses
+      if (response.data.success) {
+        setJoinStatus("Join request sent successfully"); // Display success message
+      } else {
+        setJoinStatus(response.data.message); // Display "already sent" message
+      }
+      setShowStatus(true); // Show the status
     } catch (error) {
       console.error("Failed to send join request:", error);
-      alert("Failed to send join request. Try again.");
+      setJoinStatus("Failed to send join request. Try again.");
+      setShowStatus(true); // Show the status
     }
   };
+  // Effect to fade out the join status after 3 seconds
+  useEffect(() => {
+    if (showStatus) {
+      const timer = setTimeout(() => {
+        setShowStatus(false);
+        setJoinStatus(""); // Clear status after timeout
+      }, 3000); // 3 seconds
 
+      return () => clearTimeout(timer); // Cleanup timeout on unmount
+    }
+  }, [showStatus]);
   return (
     <>
       <div className="w-full px-0 lg:px-10 pb-20 2xl:px-40 bg-bgColor lg:rounded-lg h-screen overflow-hidden">
@@ -101,6 +119,17 @@ const Home = () => {
             )}
           </div>
         </div>
+
+        {/* Show join request status */}
+        {joinStatus && (
+          <div
+            className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white py-2 px-4 rounded-lg transition-opacity duration-500 ${
+              showStatus ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {joinStatus}
+          </div>
+        )}
       </div>
 
       {edit && <EditProfile />}

@@ -336,7 +336,7 @@ export const deletePost = async (req, res) => {
 // Create Join Request for a trip
 export const createJoinRequest = async (req, res) => {
   try {
-    const { userId } = req.user; // Get userId from req.user, not req.body.user
+    const { userId } = req.user; // Extract userId from the authenticated user
     const { id } = req.params; // Post ID
 
     const post = await Posts.findById(id);
@@ -344,11 +344,16 @@ export const createJoinRequest = async (req, res) => {
       return res.status(404).json({ message: "Trip not found" });
     }
 
+    // Check if the user has already sent a join request
     const existingRequest = await JoinRequests.findOne({ postId: id, userId });
     if (existingRequest) {
-      return res.status(400).json({ message: "Join request already sent." });
+      return res.status(200).json({
+        success: false,
+        message: "You have already sent a join request for this trip.",
+      });
     }
 
+    // Create a new join request if not already made
     const joinRequest = await JoinRequests.create({
       postId: id,
       userId,
@@ -360,8 +365,85 @@ export const createJoinRequest = async (req, res) => {
       data: joinRequest,
     });
   } catch (error) {
-    console.log(error);
+    console.log("Error creating join request:", error);
     res.status(500).json({ message: "Server error. Please try again." });
+  }
+};
+
+// Accept Join Request
+export const acceptJoinRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const joinRequest = await JoinRequests.findById(requestId).populate(
+      "postId userId"
+    );
+
+    if (!joinRequest) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Join request not found" });
+    }
+
+    const post = await Posts.findById(joinRequest.postId);
+    if (!post || post.userId.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    // Initialize the tripMembers array if it doesn't exist
+    if (!post.tripMembers) {
+      post.tripMembers = [];
+    }
+
+    // Add the user to the tripMembers array
+    post.tripMembers.push(joinRequest.userId);
+    await post.save();
+
+    // Use deleteOne to remove the join request since it's been approved
+    await joinRequest.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: "User added to the trip",
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Server error. Try again." });
+  }
+};
+
+// Reject Join Request
+export const rejectJoinRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const joinRequest = await JoinRequests.findById(requestId).populate(
+      "postId"
+    );
+
+    if (!joinRequest) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Join request not found" });
+    }
+
+    const post = await Posts.findById(joinRequest.postId);
+    if (!post || post.userId.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    // Use deleteOne to remove the join request
+    await joinRequest.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: "Join request rejected",
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Server error. Try again." });
   }
 };
 
@@ -369,12 +451,17 @@ export const createJoinRequest = async (req, res) => {
 export const getJoinRequests = async (req, res) => {
   try {
     const { id } = req.params; // Post ID
-    const { userId } = req.user;
+    const { userId } = req.user; // Authenticated user
 
+    // Debugging: Log userId from request and post owner userId
+    console.log("Authenticated userId:", userId);
     const post = await Posts.findById(id);
+
     if (!post) {
       return res.status(404).json({ message: "Trip not found" });
     }
+
+    console.log("Post owner userId:", post.userId.toString());
 
     if (post.userId.toString() !== userId.toString()) {
       return res.status(403).json({ message: "Unauthorized" });
