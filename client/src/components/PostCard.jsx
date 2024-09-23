@@ -5,121 +5,9 @@ import { NoProfile } from "../assets";
 import { BiComment } from "react-icons/bi"; // For Queries
 import { FaUserPlus } from "react-icons/fa"; // For Join Request
 import { MdOutlineDeleteOutline } from "react-icons/md";
-import { useForm } from "react-hook-form";
-import TextInput from "./TextInput";
+import CommentForm from "./CommentForm";
 import Loading from "./Loading";
-import CustomButton from "./CustomButton";
-
-// ReplyCard Component to display individual replies
-const ReplyCard = ({ reply, user, handleLike }) => (
-  <div className="w-full py-3 ml-12">
-    <div className="flex gap-3 items-center mb-1">
-      <Link to={"/profile/" + reply?.userId?._id}>
-        <img
-          src={reply?.userId?.profileUrl ?? NoProfile}
-          alt={reply?.userId?.firstName}
-          className="w-10 h-10 rounded-full object-cover"
-        />
-      </Link>
-
-      <div>
-        <Link to={"/profile/" + reply?.userId?._id}>
-          <p className="font-medium text-base text-ascent-1">
-            {reply?.userId?.firstName} {reply?.userId?.lastName}
-          </p>
-        </Link>
-        <span className="text-ascent-2 text-sm">
-          {moment(reply?.createdAt).fromNow()}
-        </span>
-      </div>
-    </div>
-
-    <div>
-      <p className="text-ascent-2">{reply?.comment}</p>
-      <div className="mt-2 flex gap-6">
-        <p
-          className="flex gap-2 items-center text-base text-ascent-2 cursor-pointer"
-          onClick={handleLike}
-        >
-          {reply?.likes?.includes(user?._id) ? (
-            <BiComment size={20} color="blue" />
-          ) : (
-            <BiComment size={20} />
-          )}
-          {reply?.likes?.length} Likes
-        </p>
-      </div>
-    </div>
-  </div>
-);
-
-// CommentForm Component to handle comment submission
-const CommentForm = ({ user, id, replyAt, getComments }) => {
-  const [loading, setLoading] = useState(false);
-  const [errMsg, setErrMsg] = useState("");
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
-    mode: "onChange",
-  });
-
-  const onSubmit = async (data) => {
-    setLoading(true);
-    // Handle comment submit logic here
-    try {
-      // Call the backend API to submit comment
-      await getComments(); // Optionally refresh comments after submission
-      reset();
-    } catch (error) {
-      setErrMsg("Failed to submit comment");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="w-full border-b border-[#66666645]"
-    >
-      <div className="w-full flex items-center gap-2 py-4">
-        <img
-          src={user?.profileUrl ?? NoProfile}
-          alt="User"
-          className="w-10 h-10 rounded-full object-cover"
-        />
-        <TextInput
-          name="comment"
-          styles="w-full rounded-full py-3"
-          placeholder={replyAt ? `Reply @${replyAt}` : "Comment on this post"}
-          register={register("comment", {
-            required: "Comment cannot be empty",
-          })}
-          error={errors.comment ? errors.comment.message : ""}
-        />
-      </div>
-      {errMsg && (
-        <span role="alert" className="text-sm text-red-600 mt-0.5">
-          {errMsg}
-        </span>
-      )}
-      <div className="flex justify-end pb-2">
-        {loading ? (
-          <Loading />
-        ) : (
-          <CustomButton
-            title="Submit"
-            type="submit"
-            containerStyles="bg-[#0444a4] text-white py-1 px-3 rounded-full font-semibold text-sm"
-          />
-        )}
-      </div>
-    </form>
-  );
-};
+import CommentCard from "./CommentCard";
 
 const PostCard = ({ post, user, deletePost, joinTrip }) => {
   const [showQueries, setShowQueries] = useState(0);
@@ -173,7 +61,6 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
             className="w-full h-64 mt-2 rounded-lg object-top object-contain" // Updated styling to preserve aspect ratio
           />
         )}
-
         <p className="text-ascent-2 font-medium">
           Trip Start Date: {post?.startDate}
         </p>
@@ -209,7 +96,6 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
           <BiComment size={20} />
           {post?.comments?.length} Queries
         </p>
-
         {/* Show Delete button if the logged-in user is the post owner */}
         {user?._id === post?.userId?._id && (
           <div
@@ -234,71 +120,16 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
             <Loading />
           ) : comments?.length > 0 ? (
             comments?.map((comment) => (
-              <div className="w-full py-2" key={comment?._id}>
-                <div className="flex gap-3 items-center mb-1">
-                  <Link to={"/profile/" + comment?.userId?._id}>
-                    <img
-                      src={comment?.userId?.profileUrl ?? NoProfile}
-                      alt={comment?.userId?.firstName}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  </Link>
-                  <div>
-                    <Link to={"/profile/" + comment?.userId?._id}>
-                      <p className="font-medium text-base text-ascent-1">
-                        {comment?.userId?.firstName} {comment?.userId?.lastName}
-                      </p>
-                    </Link>
-                    <span className="text-ascent-2 text-sm">
-                      {moment(comment?.createdAt).fromNow()}
-                    </span>
-                  </div>
-                </div>
-                <div className="ml-12">
-                  <p className="text-ascent-2">{comment?.comment}</p>
-                  <div className="mt-2 flex gap-6">
-                    <p
-                      className="text-blue cursor-pointer"
-                      onClick={() => setReplyComments(comment?._id)}
-                    >
-                      Reply
-                    </p>
-                  </div>
-                  {replyComments === comment?._id && (
-                    <CommentForm
-                      user={user}
-                      id={comment?._id}
-                      replyAt={comment?.from}
-                      getComments={() => getComments(post?._id)}
-                    />
-                  )}
-                  <div className="py-2 px-8 mt-6">
-                    {comment?.replies?.length > 0 && (
-                      <p
-                        className="text-base text-ascent-1 cursor-pointer"
-                        onClick={() =>
-                          setShowReply(
-                            showReply === comment?._id ? 0 : comment?._id
-                          )
-                        }
-                      >
-                        Show Replies ({comment?.replies?.length})
-                      </p>
-                    )}
-                    {showReply === comment?._id &&
-                      comment?.replies?.map((reply) => (
-                        <ReplyCard
-                          reply={reply}
-                          user={user}
-                          key={reply?._id}
-                          handleLike={() =>
-                            console.log("Handle reply like logic")
-                          }
-                        />
-                      ))}
-                  </div>
-                </div>
-              </div>
+              <CommentCard
+                key={comment._id}
+                comment={comment}
+                user={user}
+                getComments={getComments}
+                replyComments={replyComments}
+                setReplyComments={setReplyComments}
+                showReply={showReply}
+                setShowReply={setShowReply}
+              />
             ))
           ) : (
             <span className="flex text-sm py-4 text-ascent-2 text-center">

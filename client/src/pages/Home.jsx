@@ -45,6 +45,26 @@ const Home = () => {
     fetchPosts(); // Fetch posts when the component loads
   }, []);
 
+  //JoinTrip functionality
+  const joinTrip = async (postId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/posts/join-request/${postId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      alert("Request to join the trip has been sent!");
+    } catch (error) {
+      console.error("Failed to send join request:", error);
+      alert("Failed to send join request. Try again.");
+    }
+  };
+
   return (
     <>
       <div className="w-full px-0 lg:px-10 pb-20 2xl:px-40 bg-bgColor lg:rounded-lg h-screen overflow-hidden">
@@ -71,6 +91,7 @@ const Home = () => {
                   post={post}
                   user={user}
                   deletePost={() => {}}
+                  joinTrip={joinTrip}
                 />
               ))
             ) : (

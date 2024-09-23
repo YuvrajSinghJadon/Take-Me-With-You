@@ -1,5 +1,5 @@
 import Comments from "../models/commentModel.js";
-import Posts from "../models/postModel.js";
+import Posts from "../models/PostModel.js";
 import JoinRequests from "../models/joinRequests.js";
 import { uploadOnCloudinary } from "../utils/uploadFiles.js";
 
@@ -260,7 +260,7 @@ export const deletePost = async (req, res) => {
 // Create Join Request for a trip
 export const createJoinRequest = async (req, res) => {
   try {
-    const { userId } = req.body.user;
+    const { userId } = req.user; // Get userId from req.user, not req.body.user
     const { id } = req.params; // Post ID
 
     const post = await Posts.findById(id);
@@ -289,11 +289,12 @@ export const createJoinRequest = async (req, res) => {
   }
 };
 
+
 // Get all join requests for a specific trip
 export const getJoinRequests = async (req, res) => {
   try {
     const { id } = req.params; // Post ID
-    const { userId } = req.body.user;
+    const { userId } = req.user;
 
     const post = await Posts.findById(id);
     if (!post) {
