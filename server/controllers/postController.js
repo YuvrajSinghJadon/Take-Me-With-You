@@ -169,32 +169,35 @@ export const getComments = async (req, res) => {
 // Comment on a Post
 export const commentPost = async (req, res) => {
   try {
-    const { comment, from } = req.body;
-    const { userId } = req.body.user;
-    const { id } = req.params;
+    const { comment } = req.body; // Get the comment text from the request
+    const { id } = req.params; // Post ID
+    const { userId } = req.user; // Get the user ID from the token
 
+    // Validate if the comment is provided
     if (!comment) {
       return res.status(400).json({ message: "Comment is required" });
     }
 
+    // Create the new comment
     const newComment = await Comments.create({
       comment,
-      from,
       userId,
-      postId: id,
+      postId: id, // Attach the post ID to associate the comment with the post
     });
 
+    // Update the post to include the new comment in its comments array
     const post = await Posts.findById(id);
     post.comments.push(newComment._id);
     await post.save();
 
+    // Respond with success
     res.status(201).json({
       success: true,
       message: "Comment added successfully",
       data: newComment,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ message: "Server error. Please try again." });
   }
 };
@@ -203,11 +206,11 @@ export const commentPost = async (req, res) => {
 export const replyPostComment = async (req, res) => {
   try {
     const { comment, replyAt, from } = req.body;
-    const { userId } = req.body.user;
-    const { id } = req.params;
+    const { userId } = req.user;
+    const { id } = req.params; // Comment ID
 
     if (!comment) {
-      return res.status(400).json({ message: "Comment is required" });
+      return res.status(400).json({ message: "Reply content is required" });
     }
 
     const commentInfo = await Comments.findById(id);
@@ -228,7 +231,7 @@ export const replyPostComment = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Reply added successfully",
-      data: commentInfo,
+      data: commentInfo.replies[commentInfo.replies.length - 1], // Send back the newly added reply
     });
   } catch (error) {
     console.log(error);
@@ -288,7 +291,6 @@ export const createJoinRequest = async (req, res) => {
     res.status(500).json({ message: "Server error. Please try again." });
   }
 };
-
 
 // Get all join requests for a specific trip
 export const getJoinRequests = async (req, res) => {

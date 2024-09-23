@@ -27,6 +27,7 @@ router.get("/:id", userAuth, getPost); // Protect this route with userAuth
 // Fetch all posts by a specific user - Authenticated route
 router.get("/get-user-post/:id", userAuth, getUserPost); // Protect this route with userAuth
 
+
 // Get comments for a post
 router.get("/comments/:postId", userAuth, getComments);
 
