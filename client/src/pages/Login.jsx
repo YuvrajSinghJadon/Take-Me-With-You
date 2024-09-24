@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // Added useLocation for redirect
-import { useDispatch } from "react-redux";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { CustomButton, Loading, TextInput } from "../components";
 import LoginBackground from "../assets/LoginBackground.png";
 import Logo1 from "../assets/Logo1.png";
-import { UserLogin } from "../redux/userSlice"; // Import the UserLogin action
-
+import { UserLogin } from "../redux/userSlice";
+import { setLoading } from "../redux/loaderSlice";
 import axios from "axios";
 
 const Login = () => {
@@ -18,15 +18,15 @@ const Login = () => {
     mode: "onChange",
   });
 
+  const { isLoading } = useSelector((state) => state.loader);
   const [errMsg, setErrMsg] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation(); // Get the location to redirect the user back
-  const from = location.state?.from?.pathname || "/"; // Redirect to the original page or home
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
   const onSubmit = async (data) => {
-    setIsSubmitting(true);
+    dispatch(setLoading(true));
     setErrMsg("");
 
     try {
@@ -39,30 +39,31 @@ const Login = () => {
       );
 
       const { token, user } = response.data;
-
-      // Dispatch the UserLogin action with both user and token
       dispatch(UserLogin(user, token));
 
-
-      // Redirect to the previous page or home after successful login
       navigate(from, { replace: true });
     } catch (error) {
       setErrMsg("Invalid email or password");
     } finally {
-      setIsSubmitting(false);
+      dispatch(setLoading(false));
     }
   };
 
   return (
-    <div className="bg-bgColor w-full h-screen flex items-center justify-center p-6">
+    <div className="bg-bgColor w-full h-screen flex items-center justify-center p-6 relative">
       <div
-        className="absolute top-0 left-0 w-full h-full bg-cover bg-center"
+        className="absolute top-0 left-0 w-full h-full bg-cover bg-center z-0"
         style={{ backgroundImage: `url(${LoginBackground})` }}
       ></div>
-      <div className="relative w-full md:w-2/3 lg:w-1/2 xl:w-1/3 rounded-xl shadow-2xl p-8 bg-gradient-to-tr from-blue-400 via-purple-500 to-pink-500 hover:shadow-3xl transform hover:scale-105 transition duration-300">
+
+      {/* The form content */}
+      <div
+        className={`relative z-10 w-full md:w-2/3 lg:w-1/2 xl:w-1/3 rounded-xl shadow-2xl p-8 bg-gradient-to-tr from-blue-400 via-purple-500 to-pink-500 transform transition duration-300 ${
+          isLoading ? "opacity-20" : "opacity-100"
+        } transition-opacity`}
+      >
         <div className="flex flex-col items-center">
           <div className="mb-6">
-            {/* Logo Placeholder */}
             <img
               src={Logo1}
               alt="TakeMeWithYou Logo"
@@ -118,15 +119,12 @@ const Login = () => {
               <span className="text-sm text-red-500 mt-0.5">{errMsg}</span>
             )}
 
-            {isSubmitting ? (
-              <Loading />
-            ) : (
-              <CustomButton
-                type="submit"
-                containerStyles="inline-flex justify-center rounded-full bg-primary px-8 py-3 text-sm font-medium text-white"
-                title="Login"
-              />
-            )}
+            <CustomButton
+              type="submit"
+              containerStyles="inline-flex justify-center rounded-full bg-primary px-8 py-3 text-sm font-medium text-white"
+              title="Login"
+              disabled={isLoading}
+            />
           </form>
 
           <p className="text-secondary text-sm text-center">
@@ -140,6 +138,13 @@ const Login = () => {
           </p>
         </div>
       </div>
+
+      {/* Full-screen loading overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-20">
+          <Loading />
+        </div>
+      )}
     </div>
   );
 };
