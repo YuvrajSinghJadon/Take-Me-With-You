@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // Import Axios for API calls
+import axios from "axios";
 import { useSelector } from "react-redux";
 import {
   CustomButton,
@@ -13,15 +13,18 @@ import {
 } from "../components";
 import { Link } from "react-router-dom";
 import Notification from "../components/Notification";
+import { HiMenuAlt3 } from "react-icons/hi";
 
 const Home = () => {
   const { user, edit } = useSelector((state) => state.user);
-  const [posts, setPosts] = useState([]); // State to store fetched posts
+  const [posts, setPosts] = useState([]);
   const [errMsg, setErrMsg] = useState("");
-  const [loading, setLoading] = useState(true); // Loading state while fetching posts
+  const [loading, setLoading] = useState(true);
   const [joinStatus, setJoinStatus] = useState("");
   const [showStatus, setShowStatus] = useState(false);
-  // Fetch all posts (for homepage)
+  const [showMenu, setShowMenu] = useState(false);
+
+  // Fetch all posts
   const fetchPosts = async () => {
     setLoading(true);
     try {
@@ -42,12 +45,11 @@ const Home = () => {
     }
   };
 
-  // Use useEffect to fetch posts on component mount
   useEffect(() => {
-    fetchPosts(); // Fetch posts when the component loads
+    fetchPosts();
   }, []);
 
-  //JoinTrip functionality
+  // JoinTrip functionality
   const joinTrip = async (postId) => {
     try {
       const token = localStorage.getItem("token");
@@ -60,63 +62,107 @@ const Home = () => {
           },
         }
       );
-      // Handle different responses
       if (response.data.success) {
-        setJoinStatus("Join request sent successfully"); // Display success message
+        setJoinStatus("Join request sent successfully");
       } else {
-        setJoinStatus(response.data.message); // Display "already sent" message
+        setJoinStatus(response.data.message);
       }
-      setShowStatus(true); // Show the status
+      setShowStatus(true);
     } catch (error) {
       console.error("Failed to send join request:", error);
       setJoinStatus("Failed to send join request. Try again.");
-      setShowStatus(true); // Show the status
+      setShowStatus(true);
     }
   };
-  // Effect to fade out the join status after 3 seconds
+
+  // Fade out join status after 3 seconds
   useEffect(() => {
     if (showStatus) {
       const timer = setTimeout(() => {
         setShowStatus(false);
-        setJoinStatus(""); // Clear status after timeout
-      }, 3000); // 3 seconds
-
-      return () => clearTimeout(timer); // Cleanup timeout on unmount
+        setJoinStatus("");
+      }, 3000);
+      return () => clearTimeout(timer);
     }
   }, [showStatus]);
+
+  // Toggle Menu Function
+  const toggleMenu = () => {
+    setShowMenu((prev) => {
+      console.log("Toggling menu:", !prev);
+      return !prev;
+    });
+  };
+
   return (
     <>
+      {/* Hamburger Menu Outside the Main Container */}
+      <div className="lg:hidden fixed bottom-4 right-4 z-50">
+        <button
+          className="p-3 bg-blue-500 text-white border-2 border-black rounded-full shadow-lg"
+          onClick={toggleMenu}
+          aria-label="Open menu"
+        >
+          <HiMenuAlt3 size={24} />
+        </button>
+
+        {/* Sliding Menu */}
+        {showMenu && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+            <div className="absolute top-0 right-0 w-64 bg-white shadow-lg h-full flex flex-col z-60">
+              <button
+                className="text-right p-4 text-xl"
+                onClick={() => setShowMenu(false)}
+                aria-label="Close menu"
+              >
+                &times;
+              </button>
+
+              {/* Menu content */}
+              <ProfileCard user={user} />
+              <FriendsCard friends={user?.friends} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main Container without Hamburger Menu */}
       <div className="w-full px-0 lg:px-10 pb-20 2xl:px-40 bg-bgColor lg:rounded-lg h-screen overflow-hidden">
         <TopBar />
         <div className="w-full flex gap-2 lg:gap-4 pt-5 pb-10 h-full">
-          {/* LEFT */}
-          <div className="hidden w-1/3 lg:w-1/4 h-full md:flex flex-col gap-6 overflow-y-auto">
+          {/* LEFT SECTION (PROFILE & FRIENDS) */}
+          <div className="hidden lg:flex w-1/4 h-full flex-col gap-6 overflow-y-auto">
             <ProfileCard user={user} />
             <FriendsCard friends={user?.friends} />
           </div>
 
-          {/* CENTER */}
-          <div className="flex-1 h-full px-4 flex  flex-col gap-6 overflow-y-auto rounded-lg">
-            <CreatePost fetchPosts={fetchPosts} user={user} />{" "}
-            {/* Use CreatePost component */}
-            {/* Display Posts */}
-            {loading ? (
-              <Loading />
-            ) : posts?.length > 0 ? (
-              posts?.map((post) => (
-                <PostCard
-                  key={post?._id}
-                  post={post}
-                  user={user}
-                  deletePost={() => {}}
-                  joinTrip={joinTrip}
-                />
-              ))
-            ) : (
-              <div className="flex w-full h-full items-center justify-center">
-                <p className="text-lg text-ascent-2">No Post Available</p>
-              </div>
-            )}
+          {/* CENTER SECTION */}
+          <div className="flex-1 h-full px-4 flex flex-col gap-6 overflow-y-auto">
+            <div className="w-full lg:max-w-3xl mx-auto">
+              <CreatePost fetchPosts={fetchPosts} />
+              {loading ? (
+                <Loading />
+              ) : posts?.length > 0 ? (
+                posts.map((post) => (
+                  <PostCard
+                    key={post?._id}
+                    post={post}
+                    user={user}
+                    deletePost={() => {}}
+                    joinTrip={joinTrip}
+                  />
+                ))
+              ) : (
+                <div className="flex w-full h-full items-center justify-center">
+                  <p className="text-lg text-ascent-2">No Post Available</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT SECTION (NOTIFICATIONS) */}
+          <div className="hidden lg:flex w-1/4 h-full flex-col gap-6 overflow-y-auto">
+            <Notification />
           </div>
         </div>
 
@@ -130,9 +176,9 @@ const Home = () => {
             {joinStatus}
           </div>
         )}
-      </div>
 
-      {edit && <EditProfile />}
+        {edit && <EditProfile />}
+      </div>
     </>
   );
 };
