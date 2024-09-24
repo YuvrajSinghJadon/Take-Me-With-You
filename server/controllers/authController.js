@@ -39,7 +39,7 @@ export const login = async (req, res, next) => {
 
   // Validation
   if (!email || !password) {
-    return next("Please Provide User Credentials");
+    return res.status(400).json({ message: "Please provide user credentials" });
   }
 
   try {
@@ -75,7 +75,7 @@ export const login = async (req, res, next) => {
       token,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Login error: ", error); // Log the error to get more details
     res.status(500).json({ message: "Server error. Please try again." });
   }
 };
