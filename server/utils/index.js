@@ -10,8 +10,8 @@ export const hashString = async (useValue) => {
 };
 
 // Compare a string (e.g., passwords)
-export const compareString = async (userPassword, password) => {
-  const isMatch = await bcrypt.compare(userPassword, password);
+export const compareString = async (password, userPassword) => {
+  const isMatch = await bcrypt.compare(password, userPassword);
   return isMatch;
 };
 

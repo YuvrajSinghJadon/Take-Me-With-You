@@ -11,14 +11,10 @@ import {
   resetPassword,
   suggestedFriends,
   updateUser,
-  verifyEmail,
 } from "../controllers/userController.js";
 import userAuth from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-
-// Email verification
-router.get("/verify/:userId/:token", verifyEmail);
 
 // Password reset
 router.post("/request-passwordreset", requestPasswordReset);

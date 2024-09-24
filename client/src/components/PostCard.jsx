@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import moment from "moment";
 import { NoProfile } from "../assets";
 import { BiComment } from "react-icons/bi"; // For Queries
@@ -14,7 +14,6 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
   const [comments, setComments] = useState(post?.comments || []); // Existing comments
   const [showComments, setShowComments] = useState(false); // Toggle to show/hide comments
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const getComments = async () => {
     setLoading(true);
@@ -82,7 +81,7 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
   };
 
   return (
-    <div className="mb-2 bg-primary p-4 rounded-xl cursor-pointer">
+    <div className="mb-2 bg-primary p-4 rounded-xl cursor-pointer ">
       <div className="flex gap-3 items-center mb-2">
         <Link to={`/profile/${post?.userId?._id}`}>
           <img

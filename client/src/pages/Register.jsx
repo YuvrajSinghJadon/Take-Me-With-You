@@ -36,6 +36,7 @@ const Register = () => {
           lastName: data.lastName,
           email: data.email,
           password: data.password,
+          whatsappNumber: data.whatsappNumber,
         }
       );
 
@@ -130,7 +131,18 @@ const Register = () => {
                 error={errors.lastName ? errors.lastName?.message : ""}
               />
             </div>
-
+            {/* WhatsApp Number Field */}
+            <TextInput
+              name="whatsappNumber"
+              label="WhatsApp Number"
+              placeholder="WhatsApp Number"
+              type="text"
+              styles="w-full rounded-full border border-primary px-4 py-2"
+              register={register("whatsappNumber", {
+                required: "WhatsApp Number is required",
+              })}
+              error={errors.whatsappNumber ? errors.whatsappNumber.message : ""}
+            />
             {/* Email Address */}
             <TextInput
               name="email"

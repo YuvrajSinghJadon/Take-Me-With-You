@@ -1,42 +1,116 @@
 import Users from "../models/userModel.js";
+import Verification from "../models/emailVerification.js";
 import { compareString, createJWT, hashString } from "../utils/index.js";
 import { sendVerificationEmail } from "../utils/sendEmail.js";
+import { v4 as uuidv4 } from "uuid";
+import bcrypt from "bcryptjs";
 
 export const register = async (req, res, next) => {
-  const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, password, whatsappNumber } = req.body;
 
-  // Validate fields
-  if (!firstName || !lastName || !email || !password) {
-    return next("Provide Required Fields!");
+  // Validate required fields
+  if (!firstName || !lastName || !email || !password || !whatsappNumber) {
+    return res.status(400).json({ message: "Provide Required Fields!" });
   }
 
   try {
+    // Check if the user already exists
     const userExist = await Users.findOne({ email });
-
     if (userExist) {
-      return next("Email Address already exists");
+      return res.status(400).json({ message: "Email Address already exists" });
     }
 
+    // Hash the password
     const hashedPassword = await hashString(password);
+
+    // Generate a verification token (for email verification)
+    const token = uuidv4(); // Generate a random token
+    const hashedToken = await hashString(token); // Store the hashed token
+
+    // Store the verification token in the database for this email
+    await Verification.create({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      whatsappNumber,
+      token: hashedToken, // Store the hashed token
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 3600000, // 1 hour expiry for the token
+    });
+
+    // Send verification email
+    try {
+      await sendVerificationEmail({ email, token, lastName }, res);
+      return res.status(201).json({
+        success: true,
+        message: "Registration successful. Please verify your email.",
+      });
+    } catch (emailError) {
+      console.error("Failed to send email:", emailError);
+      return res.status(500).json({
+        message: "Failed to send verification email. Please try again.",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error. Try again later." });
+  }
+};
+export const verifyEmail = async (req, res) => {
+  const { token } = req.params; // Get the token from the URL
+
+  try {
+    // Find the verification record
+    const verificationRecord = await Verification.findOne({});
+
+    if (!verificationRecord) {
+      return res.status(400).json({ message: "Invalid or expired token." });
+    }
+
+    // Check if token has expired
+    if (verificationRecord.expiresAt < Date.now()) {
+      // If the token has expired, delete the verification record
+      await Verification.findByIdAndDelete(verificationRecord._id);
+      return res
+        .status(400)
+        .json({ message: "Token has expired. Please register again." });
+    }
+
+    // Compare the token with the stored hashed token
+    const isMatch = await bcrypt.compare(token, verificationRecord.token);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid or expired token." });
+    }
+
+    // Create the user now that the email is verified
+    const { firstName, lastName, email, password, whatsappNumber } =
+      verificationRecord;
 
     const user = await Users.create({
       firstName,
       lastName,
       email,
-      password: hashedPassword,
+      password, // Password is already hashed
+      whatsappNumber,
+      verified: true,
     });
 
-    // Send email verification to user
-    await sendVerificationEmail(user, res);
+    // Delete the verification record after user creation
+    await Verification.findByIdAndDelete(verificationRecord._id);
+
+    // Send success response
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully, and account created!",
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error. Try again later." });
   }
 };
-
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
-
   // Validation
   if (!email || !password) {
     return res.status(400).json({ message: "Please provide user credentials" });

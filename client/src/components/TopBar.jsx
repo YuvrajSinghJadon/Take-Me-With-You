@@ -39,7 +39,7 @@ const TopBar = () => {
           },
         }
       );
-
+      console.log("Search Response: ", response.data);
       // Set the results in state
       setSearchResults(response.data);
     } catch (error) {
