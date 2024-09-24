@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import TextInput from "./TextInput";
 import Loading from "./Loading"; // Your custom loading component
 import CustomButton from "./CustomButton";
-import { UpdateProfile } from "../redux/userSlice";
+import { UpdateProfile, SetEditState } from "../redux/userSlice";
 import { setLoading } from "../redux/loaderSlice"; // For loading state
 import axios from "axios";
 
@@ -66,9 +66,9 @@ const EditProfile = () => {
         // Delay modal close and redirect by 3 seconds
         setTimeout(() => {
           setShowPopup(false); // Hide the popup
-          dispatch(UpdateProfile(false)); // Close the modal
+          dispatch(SetEditState(false)); // Close the modal by setting edit state to false
           navigate("/"); // Redirect to home page
-        }, 3000);
+        }, 3000); // 3 seconds
       } else {
         setErrMsg("Failed to update profile. Please try again.");
       }
@@ -81,7 +81,7 @@ const EditProfile = () => {
   };
 
   const handleClose = () => {
-    dispatch(UpdateProfile(false)); // Close the modal
+    dispatch(SetEditState(false)); // Close the modal using SetEditState
   };
 
   const handleSelect = (e) => {

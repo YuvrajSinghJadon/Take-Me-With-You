@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { useNavigate } from "react-router-dom";
 
 // Function to safely get the user from localStorage (browser-only)
 const getInitialUser = () => {
@@ -20,7 +19,7 @@ const getToken = () => {
 const initialState = {
   user: getInitialUser(), // Retrieve user from localStorage
   token: getToken(), // Retrieve token from localStorage
-  edit: false,
+  edit: false, // This controls the UI for editing
 };
 
 const userSlice = createSlice({
@@ -52,8 +51,19 @@ const userSlice = createSlice({
         window.localStorage.removeItem("token");
       }
     },
-    updateProfile(state, action) {
+    // This handles the UI state for showing/hiding the edit form
+    setEditState(state, action) {
       state.edit = action.payload;
+    },
+    // This updates the actual user profile data
+    updateProfile(state, action) {
+      // Update the user profile in the state
+      state.user = { ...state.user, ...action.payload };
+
+      // Persist the updated user in localStorage
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("user", JSON.stringify(state.user));
+      }
     },
   },
 });
@@ -62,7 +72,7 @@ const userSlice = createSlice({
 export default userSlice.reducer;
 
 // Export actions
-export const { login, logout, updateProfile } = userSlice.actions;
+export const { login, logout, updateProfile, setEditState } = userSlice.actions;
 
 // Simplified action creators
 export const UserLogin = (user, token) => (dispatch) => {
@@ -79,6 +89,13 @@ export const Logout = () => (dispatch) => {
   }
 };
 
-export const UpdateProfile = (val) => (dispatch) => {
-  dispatch(updateProfile(val));
+// UpdateProfile action creator to update the actual user profile data
+export const UpdateProfile = (updatedUserData) => (dispatch) => {
+  // Dispatch the updated user data
+  dispatch(updateProfile(updatedUserData));
+};
+
+// SetEditState action creator to control the edit modal visibility
+export const SetEditState = (editState) => (dispatch) => {
+  dispatch(setEditState(editState));
 };

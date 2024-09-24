@@ -12,7 +12,7 @@ import { FaTwitterSquare } from "react-icons/fa";
 import { CiLocationOn } from "react-icons/ci";
 import moment from "moment";
 import { NoProfile } from "../assets";
-import { UpdateProfile } from "../redux/userSlice";
+import { setEditState } from "../redux/userSlice";
 
 const ProfileCard = ({ user }) => {
   const { user: loggedInUser } = useSelector((state) => state.user); // renamed "data" to "loggedInUser" for clarity
@@ -20,13 +20,12 @@ const ProfileCard = ({ user }) => {
 
   // Handlers
   const handleEditProfile = () => {
-    dispatch(UpdateProfile(true));
+    dispatch(setEditState(true)); // Set the edit state to true
   };
 
   const handleAddFriend = () => {
     // Add logic to handle friend request
   };
-
   return (
     <div>
       <div className="w-full bg-primary flex flex-col items-center shadow-sm rounded-xl px-6 py-4 ">
@@ -37,7 +36,6 @@ const ProfileCard = ({ user }) => {
               alt={user?.email}
               className="w-14 h-14 object-cover rounded-full"
             />
-
             <div className="flex flex-col justify-center">
               <p className="text-lg font-medium text-ascent-1">
                 {user?.firstName} {user?.lastName}

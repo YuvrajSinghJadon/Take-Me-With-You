@@ -79,7 +79,6 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
     }
     setShowComments(!showComments); // Toggle comment section
   };
-
   return (
     <div className="mb-2 bg-primary p-4 rounded-xl cursor-pointer ">
       <div className="flex gap-3 items-center mb-2">
