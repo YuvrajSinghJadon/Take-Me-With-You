@@ -4,17 +4,18 @@ import { MdClose } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import TextInput from "./TextInput";
-import Loading from "./Loading";
+import Loading from "./Loading"; // Your custom loading component
 import CustomButton from "./CustomButton";
 import { UpdateProfile } from "../redux/userSlice";
+import { setLoading } from "../redux/loaderSlice"; // For loading state
 import axios from "axios";
 
 const EditProfile = () => {
   const { user } = useSelector((state) => state.user);
+  const { isLoading } = useSelector((state) => state.loader); // Get the loader state
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [errMsg, setErrMsg] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [picture, setPicture] = useState(null);
 
@@ -29,7 +30,7 @@ const EditProfile = () => {
   });
 
   const onSubmit = async (data) => {
-    setIsSubmitting(true);
+    dispatch(setLoading(true)); // Start loading
     setErrMsg("");
 
     try {
@@ -60,6 +61,7 @@ const EditProfile = () => {
         reset(); // Reset form fields
         setPicture(null); // Clear selected image
         setShowPopup(true); // Show success popup
+        dispatch(setLoading(false)); // Stop loading before showing popup
 
         // Delay modal close and redirect by 3 seconds
         setTimeout(() => {
@@ -74,7 +76,7 @@ const EditProfile = () => {
       console.error("Profile update failed:", error);
       setErrMsg("Profile update failed. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      dispatch(setLoading(false)); // Stop loading after everything
     }
   };
 
@@ -88,6 +90,14 @@ const EditProfile = () => {
 
   return (
     <div className="fixed z-50 inset-0 flex items-center justify-center overflow-y-auto">
+      {/* Full-Screen Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <Loading /> {/* Your custom loading animation */}
+        </div>
+      )}
+
+      {/* Modal */}
       <div className="fixed inset-0 bg-black opacity-60"></div>
       <div className="relative bg-white w-full max-w-lg rounded-lg shadow-xl p-8 z-10">
         <div className="flex justify-between items-center mb-4">
@@ -167,15 +177,13 @@ const EditProfile = () => {
           )}
 
           <div className="flex justify-end mt-6">
-            {isSubmitting ? (
-              <Loading />
-            ) : (
+            {!isLoading ? (
               <CustomButton
                 type="submit"
                 containerStyles="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition"
                 title="Submit"
               />
-            )}
+            ) : null}
           </div>
         </form>
       </div>
