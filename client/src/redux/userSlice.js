@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { useNavigate } from "react-router-dom";
 
 // Function to safely get the user from localStorage (browser-only)
 const getInitialUser = () => {
@@ -71,6 +72,11 @@ export const UserLogin = (user, token) => (dispatch) => {
 
 export const Logout = () => (dispatch) => {
   dispatch(logout());
+
+  // After dispatching logout, clear the browser history and navigate to the homepage
+  if (typeof window !== "undefined") {
+    window.location.href = "/"; // Navigate to the homepage after logging out
+  }
 };
 
 export const UpdateProfile = (val) => (dispatch) => {

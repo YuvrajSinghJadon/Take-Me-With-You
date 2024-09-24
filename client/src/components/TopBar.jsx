@@ -1,7 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import TextInput from "./TextInput";
 import CustomButton from "./CustomButton";
 import { useForm } from "react-hook-form";
@@ -97,7 +97,7 @@ const TopBar = () => {
         {/* Logout Button */}
         <div>
           <CustomButton
-            onClick={() => dispatch(Logout())}
+            onClick={() => dispatch(Logout())} // Call the updated Logout action
             title="Log Out"
             containerStyles="text-sm text-white px-4 md:px-6 py-1 md:py-2 border border-[#666] rounded-full"
           />
