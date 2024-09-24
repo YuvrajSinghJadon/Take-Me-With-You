@@ -13,6 +13,7 @@ import {
   updateUser,
 } from "../controllers/userController.js";
 import userAuth from "../middleware/authMiddleware.js";
+import { upload } from "../middleware/multerMiddleware.js";
 
 const router = express.Router();
 
@@ -23,8 +24,13 @@ router.post("/reset-password", changePassword);
 
 // User-related routes
 // GET user by ID
-router.get('/get-user/:id', userAuth, getUserById);
-router.put("/update-user", userAuth, updateUser);
+router.get("/get-user/:id", userAuth, getUserById);
+router.put(
+  "/update-user",
+  userAuth,
+  upload.single("profilePicture"),
+  updateUser
+);
 
 // Friend requests
 router.post("/friend-request", userAuth, friendRequest);

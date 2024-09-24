@@ -1,11 +1,10 @@
-//userController.js
-import Verification from "../models/emailVerification.js";
+import cloudinary from "cloudinary";
+import { uploadOnCloudinary } from "../utils/uploadFiles.js"; // Assume we have this utility
 import Users from "../models/userModel.js";
 import { compareString, createJWT, hashString } from "../utils/index.js";
 import PasswordReset from "../models/PasswordReset.js";
 import { resetPasswordLink } from "../utils/sendEmail.js";
 import FriendRequest from "../models/friendRequest.js";
-
 
 export const requestPasswordReset = async (req, res) => {
   try {
@@ -132,43 +131,43 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const updateUser = async (req, res, next) => {
-  try {
-    const { firstName, lastName, location, profileUrl, profession } = req.body;
+// Update user profile
+export const updateUser = async (req, res) => {
+  const { userId } = req.user; // Authenticated user ID
+  const { firstName, lastName, profession, location } = req.body;
 
-    if (!(firstName || lastName || contact || profession || location)) {
-      next("Please provide all required fields");
-      return;
+  try {
+    const user = await Users.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const { userId } = req.body.user;
+    // Handle profile picture upload if file is provided
+    let profileUrl = user.profileUrl;
+    if (req.file) {
+      const uploadResult = await uploadOnCloudinary(req.file.path);
+      if (uploadResult) {
+        profileUrl = uploadResult.url;
+      }
+    }
 
-    const updateUser = {
-      firstName,
-      lastName,
-      location,
-      profileUrl,
-      profession,
-      _id: userId,
-    };
-    const user = await Users.findByIdAndUpdate(userId, updateUser, {
-      new: true,
-    });
+    // Update user details
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.profession = profession;
+    user.location = location;
+    user.profileUrl = profileUrl;
 
-    await user.populate({ path: "friends", select: "-password" });
-    const token = createJWT(user?._id);
-
-    user.password = undefined;
+    await user.save();
 
     res.status(200).json({
-      sucess: true,
-      message: "User updated successfully",
+      success: true,
+      message: "Profile updated successfully",
       user,
-      token,
     });
   } catch (error) {
-    console.log(error);
-    res.status(404).json({ message: error.message });
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Server error. Please try again." });
   }
 };
 
