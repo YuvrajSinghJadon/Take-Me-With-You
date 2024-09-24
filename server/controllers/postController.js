@@ -2,7 +2,7 @@ import Comments from "../models/commentModel.js";
 import Posts from "../models/PostModel.js";
 import JoinRequests from "../models/joinRequests.js";
 import { uploadOnCloudinary } from "../utils/uploadFiles.js";
-
+import sendWhatsAppMessage from "../utils/smsService.js";
 // Create a Posts
 export const createPost = async (req, res) => {
   try {
@@ -339,10 +339,13 @@ export const createJoinRequest = async (req, res) => {
     const { userId } = req.user; // Extract userId from the authenticated user
     const { id } = req.params; // Post ID
 
+    // Fetch the post along with the owner's user details
     const post = await Posts.findById(id);
+
     if (!post) {
       return res.status(404).json({ message: "Trip not found" });
     }
+    // Log the owner details for debugging
 
     // Check if the user has already sent a join request
     const existingRequest = await JoinRequests.findOne({ postId: id, userId });
@@ -358,6 +361,20 @@ export const createJoinRequest = async (req, res) => {
       postId: id,
       userId,
     });
+
+    // const owner = post.userId; // Populated with full user details (firstName, whatsappNumber)
+    // if (owner && owner.whatsappNumber) {
+    //   console.log("this is called");
+    //   const messageContent = {
+    //     to: `+91${owner.whatsappNumber}`, // Prepend +91 to the number
+    //     message: `Hello ${owner.firstName}, a user has requested to join your trip: "${post.description}". Please review the request.`,
+    //   };
+    //   console.log("this is called before await");
+    //   await sendWhatsAppMessage(messageContent); // Send the message using your service
+    //   console.log("this is called after await");
+    // } else {
+    //   console.log("Owner WhatsApp number not found");
+    // }
 
     res.status(201).json({
       success: true,

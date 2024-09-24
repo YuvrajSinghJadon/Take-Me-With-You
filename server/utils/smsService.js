@@ -1,49 +1,55 @@
-// server/utils/smsService.js
-import fetch from "node-fetch"; // Ensure you have this installed
+import axios from "axios";
 
-const sendWhatsAppMessage = async (phone, templateName, placeholders) => {
-  const myHeaders = new Headers();
-  myHeaders.append(
-    "Authorization",
-    "5f1005f4b4e0f1d161e49dab3b5a31f6-0fb2ee6a-2d8b-41e0-bae0-9d575f15a55a"
-  ); // Replace with your actual API key
-  myHeaders.append("Content-Type", "application/json");
-  myHeaders.append("Accept", "application/json");
+// Function to send a WhatsApp message using the Infobip API
+const sendWhatsAppMessage = async ({ to, message }) => {
+  // Prepend country code if missing
+  if (!to.startsWith("+")) {
+    to = `+91${to}`; // Ensure that the phone number is in the correct format
+  }
 
-  const raw = JSON.stringify({
+  const headers = {
+    Authorization: `App ${process.env.INFOBIP_API_KEY}`, // Infobip API Key from environment variable
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  const data = {
     messages: [
       {
-        from: "447860099299", // Your sender number
-        to: phone,
+        from: process.env.INFOBIP_SENDER, // WhatsApp Business API number
+        to: to, // Recipient's WhatsApp number
         content: {
-          templateName: templateName,
-          templateData: {
-            body: {
-              placeholders: placeholders,
-            },
-          },
-          language: "en",
+          text: message, // Message content
         },
       },
     ],
-  });
-
-  const requestOptions = {
-    method: "POST",
-    headers: myHeaders,
-    body: raw,
-    redirect: "follow",
   };
 
   try {
-    const response = await fetch(
-      "https://9kl5pr.api.infobip.com/whatsapp/1/message/template",
-      requestOptions
+    // Send the request to Infobip API using axios
+    const response = await axios.post(
+      "https://9kl5pr.api.infobip.com/whatsapp/1/message/text",
+      data,
+      { headers }
     );
-    return await response.json(); // Return the result
+
+    // Log response status and data for debugging
+    console.log("Infobip Response Status:", response.status);
+    console.log("Infobip Response Data:", response.data);
+
+    if (response.status === 200 || response.status === 201) {
+      console.log("WhatsApp message sent successfully.");
+    } else {
+      console.error(
+        "Failed to send WhatsApp message. Response:",
+        response.data
+      );
+    }
   } catch (error) {
-    console.error("Error sending message:", error);
-    throw error;
+    console.error(
+      "Error while sending WhatsApp message:",
+      error.response?.data || error.message
+    );
   }
 };
 
