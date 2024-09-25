@@ -81,7 +81,10 @@ const CreatePost = ({ fetchPosts, user }) => {
       <CustomButton
         title="Create Post"
         onClick={() => setShowModal(true)}
-        containerStyles="bg-[#0444a4] text-white py-2 px-6 rounded-full font-semibold text-lg mx-auto w-auto max-w-xs"
+        size="lg" // Adjust size (based on the provided size)
+        backgroundColor="bg-[#0444a4]" // Custom background color
+        textColor="text-white" // Custom text color
+        containerStyles="font-semibold mx-auto w-auto max-w-xs rounded-full" // Simplified and kept relevant custom styles
       />
 
       {/* Modal for Create Post */}
@@ -186,7 +189,10 @@ const CreatePost = ({ fetchPosts, user }) => {
                       <CustomButton
                         type="submit"
                         title="Post"
-                        containerStyles="bg-[#0444a4] text-white py-1 px-6 rounded-full font-semibold text-sm"
+                        size="sm" // Smaller button size for "Post"
+                        backgroundColor="bg-[#0444a4]" // Custom background color
+                        textColor="text-white" // Custom text color
+                        containerStyles="font-semibold rounded-full" // Simplified the custom styles for consistency
                       />
                     </div>
                   </div>

@@ -160,15 +160,23 @@ const EditProfile = () => {
           />
 
           {/* Image upload section */}
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Profile Picture
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleSelect}
-            className="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none"
-          />
+          <div className="flex items-center space-x-4">
+            <div>
+              <label
+                htmlFor="file-upload"
+                className="inline-block px-4 py-2 bg-blue-600 text-white font-semibold text-sm rounded-md shadow-sm cursor-pointer hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Upload Picture
+              </label>
+              <input
+                id="file-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
 
           {errMsg && (
             <span role="alert" className="text-sm text-red-500 mt-2">
@@ -180,8 +188,11 @@ const EditProfile = () => {
             {!isLoading ? (
               <CustomButton
                 type="submit"
-                containerStyles="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition"
                 title="Submit"
+                size="md" // Using medium size for this button
+                backgroundColor="bg-blue-600" // Custom background color
+                textColor="text-white" // Custom text color
+                containerStyles="rounded-full transition hover:bg-blue-700" // Simplified and retained hover state
               />
             ) : null}
           </div>
