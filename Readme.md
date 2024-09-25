@@ -105,11 +105,11 @@ Make sure you have the following installed:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the NONE - see the [LICENSE.md](LICENSE.md) file for details.
 
 ---
 
 ## Collaborators
 
-- **Your Name** - [Your GitHub Profile](https://github.com/your-profile)
-- **Partner's Name** - [Partner's GitHub Profile](https://github.com/partner-profile)
+- [**Yuvraj Singh Jadon**](https://github.com/YuvrajSinghJadon)
+- [**Ansh Jain**](https://github.com/alwaysAnsh)
