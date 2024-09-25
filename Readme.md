@@ -1,6 +1,8 @@
 # Take Me With You
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/89d6cd3d-83a6-4bd6-94fc-e00c18c8a6a6" alt="Logo" width="300" height="auto">
+</p>
 
-![Logo](/Users/mymac/Desktop/Studies/TakeMeWithYou2/client/src/assets/Logo1.png)
 
 **Take Me With You** is a social platform where users can find travel partners by sharing and discovering travel plans. The platform also facilitates collaboration between users to plan trips together. It can be used both as a travel-oriented social network and a travel-based dating platform for adventure enthusiasts.
 
