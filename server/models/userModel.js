@@ -28,7 +28,8 @@ const userSchema = new mongoose.Schema(
     friends: [{ type: Schema.Types.ObjectId, ref: "Users" }],
     views: [{ type: String }],
     verified: { type: Boolean, default: false },
-    whatsappNumber: { type: String, required: true }, 
+    whatsappNumber: { type: String, required: true },
+    groups: [{ type: Schema.Types.ObjectId, ref: "Groups" }], // Assuming a separate Group model for chat groups
   },
   { timestamps: true }
 );

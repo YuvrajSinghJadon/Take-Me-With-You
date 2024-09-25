@@ -11,6 +11,7 @@ import {
   TopBar,
   CreatePost,
   Chat,
+  GroupChat,
 } from "../components";
 import { Link } from "react-router-dom";
 import Notification from "../components/Notification";
@@ -164,7 +165,7 @@ const Home = () => {
           {/* RIGHT SECTION (NOTIFICATIONS) */}
           <div className="hidden lg:flex w-1/4 h-full flex-col gap-6 overflow-y-auto">
             <Notification />
-            <Chat />
+            <GroupChat />
           </div>
         </div>
 

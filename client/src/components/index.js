@@ -8,7 +8,8 @@ import PostCard from "./PostCard";
 import EditProfile from "./EditProfile";
 import JoinRequests from "./JoinRequests";
 import CreatePost from "./CreatePost";
-import Chat from "./Chat"
+import Chat from "./Chat";
+import GroupChat from "./GroupChat";
 export {
   Loading,
   TextInput,
@@ -20,5 +21,6 @@ export {
   EditProfile,
   JoinRequests,
   CreatePost,
-  Chat
+  Chat,
+  GroupChat,
 };
