@@ -15,6 +15,7 @@ import {
   likeReply,
   acceptJoinRequest,
   rejectJoinRequest,
+  getGroupByPostId,
 } from "../controllers/postController.js";
 import { upload } from "../middleware/multerMiddleware.js";
 
@@ -31,6 +32,8 @@ router.get("/:id", userAuth, getPost); // Protect this route with userAuth
 // Fetch all posts by a specific user - Authenticated route
 router.get("/get-user-post/:id", userAuth, getUserPost); // Protect this route with userAuth
 
+// Fetch all posts by a specific user with join requests
+router.get("/get-user-post-with-join-requests/:id", userAuth, getUserPost); // Protect this route with userAuth
 // Get comments for a post
 router.get("/comments/:postId", userAuth, getComments);
 
@@ -54,5 +57,8 @@ router.get("/join-requests/:id", userAuth, getJoinRequests);
 // Accept and reject join requests
 router.post("/accept-join-request/:requestId", userAuth, acceptJoinRequest);
 router.post("/reject-join-request/:requestId", userAuth, rejectJoinRequest);
+
+// Route to get group by post ID
+router.get("/group/:postId",userAuth,  getGroupByPostId);
 
 export default router;

@@ -2,15 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Loading from "../components/Loading";
-import CommentCard from "../components/CommentCard";
-import CommentForm from "../components/CommentForm";
 
 const PostDetails = ({ user }) => {
   const { id } = useParams(); // Get the post ID from the URL
   const [post, setPost] = useState(null); // Store the post data
   const [loading, setLoading] = useState(true);
-  const [comments, setComments] = useState([]);
+  const [group, setGroup] = useState(null); // Store the group information
+  const [groupError, setGroupError] = useState(false); // Store group fetch error
 
+  // Fetch the post and related group data
   useEffect(() => {
     const fetchPostDetails = async () => {
       try {
@@ -23,7 +23,27 @@ const PostDetails = ({ user }) => {
           }
         );
         setPost(response.data.data); // Set the post data
-        setComments(response.data.data.comments); // Load the comments
+
+        // Fetch group info for this post
+        try {
+          const groupResponse = await axios.get(
+            `${import.meta.env.VITE_API_URL}/posts/group/${
+              response.data.data._id
+            }`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          setGroup(groupResponse.data.data);
+        } catch (groupError) {
+          if (groupError.response && groupError.response.status === 404) {
+            setGroupError(true); // Handle 404 error specifically
+          } else {
+            console.error("Error fetching group:", groupError);
+          }
+        }
       } catch (error) {
         console.error("Error fetching post details:", error);
       } finally {
@@ -34,42 +54,70 @@ const PostDetails = ({ user }) => {
     fetchPostDetails();
   }, [id]);
 
-  const getComments = async () => {
-    // Fetch comments if required to refresh
-  };
-
   if (loading) {
     return <Loading />;
   }
 
   return (
-    <div className="post-details-container">
+    <div className="post-details-container max-w-6xl mx-auto p-6 bg-gray-100 dark:bg-gray-900 rounded-xl">
       {post && (
-        <div className="post-content bg-primary p-6 rounded-xl">
+        <>
           {/* Post Image */}
           {post.imageUrl && (
             <img
               src={post.imageUrl}
               alt="Post"
-              className="w-full h-64 rounded-lg object-cover mb-4"
+              className="w-full h-80 rounded-lg object-cover mb-8"
             />
           )}
 
-          {/* Post Details */}
-          <h2 className="text-lg font-semibold">{post.description}</h2>
-          <p>Start Date: {post.startDate}</p>
-          <p>Estimated Days: {post.estimatedDays}</p>
-          <p>Destinations: {post.destinations?.join(", ")}</p>
+          {/* Post Details & Group */}
+          <div className="flex flex-col lg:flex-row justify-between gap-8">
+            {/* Trip Details (Left Section) */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex-1">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                {post.description}
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300">
+                <strong>Start Date:</strong> {post.startDate}
+              </p>
+              <p className="text-gray-700 dark:text-gray-300">
+                <strong>Estimated Days:</strong> {post.estimatedDays}
+              </p>
+              <p className="text-gray-700 dark:text-gray-300">
+                <strong>Destinations:</strong> {post.destinations?.join(", ")}
+              </p>
+            </div>
 
-          {/* Comment Section */}
-          <div className="comments-section mt-6">
-            <h3 className="text-lg font-semibold">Comments</h3>
-            <CommentForm user={user} id={post._id} getComments={getComments} />
-            {comments.map((comment) => (
-              <CommentCard key={comment._id} comment={comment} user={user} />
-            ))}
+            {/* Group Info (Right Section) */}
+            {group ? (
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full lg:w-1/3">
+                <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                  Trip Group
+                </h3>
+                <ul className="text-gray-700 dark:text-gray-300">
+                  {group.users.map((member) => (
+                    <li key={member._id} className="mb-2">
+                      {member.firstName} {member.lastName}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : groupError ? (
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full lg:w-1/3">
+                <p className="text-gray-700 dark:text-gray-300">
+                  No group formed.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full lg:w-1/3">
+                <p className="text-gray-700 dark:text-gray-300">
+                  Loading group information...
+                </p>
+              </div>
+            )}
           </div>
-        </div>
+        </>
       )}
     </div>
   );

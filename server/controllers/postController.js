@@ -1,4 +1,6 @@
 import Comments from "../models/commentModel.js";
+import Group from "../models/Groups.js";
+import User from "../models/userModel.js";
 import Posts from "../models/PostModel.js";
 import JoinRequests from "../models/joinRequests.js";
 import { uploadOnCloudinary } from "../utils/uploadFiles.js";
@@ -131,6 +133,52 @@ export const getUserPost = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "User's posts fetched successfully",
+      data: posts,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error. Please try again." });
+  }
+};
+// Get all posts for a user, along with join requests
+export const getUserPostsWithJoinRequests = async (req, res) => {
+  try {
+    const { id: userId } = req.params; // Get the userId from URL params
+    const { userId: authUserId } = req.user; // Authenticated user (for checking ownership)
+
+    // Step 1: Find all posts for the given user
+    const posts = await Posts.find({ userId })
+      .populate({
+        path: "userId",
+        select: "firstName lastName location profileUrl -password",
+      })
+      .populate({
+        path: "joinRequests", // Populate the joinRequests for each post
+        populate: { path: "userId", select: "firstName lastName profileUrl" }, // Populate the user who made the join request
+      })
+      .sort({ _id: -1 });
+
+    // Step 2: Ensure the posts exist
+    if (!posts.length) {
+      return res.status(200).json({
+        success: true,
+        message: "No posts found for this user",
+        data: [],
+      });
+    }
+
+    // Step 3: Ensure that the authenticated user is the owner of the posts
+    if (userId !== authUserId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized access to join requests",
+      });
+    }
+
+    // Step 4: Return the posts along with their join requests
+    res.status(200).json({
+      success: true,
+      message: "User's posts and join requests fetched successfully",
       data: posts,
     });
   } catch (error) {
@@ -339,61 +387,51 @@ export const createJoinRequest = async (req, res) => {
     const { userId } = req.user; // Extract userId from the authenticated user
     const { id } = req.params; // Post ID
 
-    // Fetch the post along with the owner's user details
+    // Fetch the post by its ID
     const post = await Posts.findById(id);
 
     if (!post) {
-      return res.status(404).json({ message: "Trip not found" });
+      return res.status(404).json({ message: "Post not found" });
     }
-    // Log the owner details for debugging
 
-    // Check if the user has already sent a join request
+    // Check if the user has already sent a join request for this post
     const existingRequest = await JoinRequests.findOne({ postId: id, userId });
+
     if (existingRequest) {
       return res.status(200).json({
         success: false,
-        message: "You have already sent a join request for this trip.",
+        message: "You have already sent a join request for this post.",
       });
     }
 
-    // Create a new join request if not already made
+    // Create a new join request
     const joinRequest = await JoinRequests.create({
       postId: id,
       userId,
     });
 
-    // const owner = post.userId; // Populated with full user details (firstName, whatsappNumber)
-    // if (owner && owner.whatsappNumber) {
-    //   console.log("this is called");
-    //   const messageContent = {
-    //     to: `+91${owner.whatsappNumber}`, // Prepend +91 to the number
-    //     message: `Hello ${owner.firstName}, a user has requested to join your trip: "${post.description}". Please review the request.`,
-    //   };
-    //   console.log("this is called before await");
-    //   await sendWhatsAppMessage(messageContent); // Send the message using your service
-    //   console.log("this is called after await");
-    // } else {
-    //   console.log("Owner WhatsApp number not found");
-    // }
+    // Push the newly created join request into the post's joinRequests array
+    post.joinRequests.push(joinRequest._id);
+    await post.save(); // Save the updated post with the join request
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "Join request sent successfully",
+      message: "Join request sent successfully.",
       data: joinRequest,
     });
   } catch (error) {
-    console.log("Error creating join request:", error);
-    res.status(500).json({ message: "Server error. Please try again." });
+    console.error("Error creating join request:", error);
+    return res.status(500).json({ message: "Server error. Please try again." });
   }
 };
 
-// Accept Join Request
 export const acceptJoinRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
-    const joinRequest = await JoinRequests.findById(requestId).populate(
-      "postId userId"
-    );
+    const { userId } = req.user; // The user (post creator) accepting the request
+
+    // Find the join request
+    const joinRequest = await JoinRequests.findById(requestId);
 
     if (!joinRequest) {
       return res
@@ -401,32 +439,114 @@ export const acceptJoinRequest = async (req, res) => {
         .json({ success: false, message: "Join request not found" });
     }
 
+    // Find the post related to the join request
     const post = await Posts.findById(joinRequest.postId);
-    if (!post || post.userId.toString() !== req.user.userId) {
+
+    if (!post || post.userId.toString() !== userId.toString()) {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
-    // Initialize the tripMembers array if it doesn't exist
-    if (!post.tripMembers) {
-      post.tripMembers = [];
+    // Check if a group exists for this specific post
+    let group = await Group.findOne({ postId: post._id });
+
+    // Log the post creator and post ID to ensure it's specific to the post
+    console.log("Post creator:", post.userId);
+    console.log("Post ID:", post._id); // Log to confirm the correct post is being handled
+
+    // If no group exists for this post, create a new one
+    if (!group) {
+      group = new Group({
+        groupName: `Group for ${post.description.slice(0, 11)}`, // Group name based on post title
+        postId: post._id, // Associate the group with the specific post
+        owner: post.userId.toString(), // Owner is the post creator
+        users: [post.userId.toString(), joinRequest.userId.toString()], // Add post creator and accepted user
+      });
+
+      await group.save();
+      console.log("Group created for post:", post._id);
+
+      // Update users (creator and accepted user) to include this group in their groups array
+      await User.findByIdAndUpdate(
+        post.userId,
+        {
+          $push: { groups: group._id },
+        },
+        { new: true, upsert: true }
+      );
+
+      await User.findByIdAndUpdate(
+        joinRequest.userId,
+        {
+          $push: { groups: group._id },
+        },
+        { new: true, upsert: true }
+      );
+
+      // Remove the join request after user is added to group
+      await joinRequest.deleteOne();
+
+      return res.status(201).json({
+        success: true,
+        message: "Group created and user added to the group for the post.",
+        group,
+      });
     }
 
-    // Add the user to the tripMembers array
-    post.tripMembers.push(joinRequest.userId);
-    await post.save();
+    // Log group information to verify it's correct for this specific post
+    console.log("Group found for post:", group.postId);
 
-    // Use deleteOne to remove the join request since it's been approved
+    // Check if the user is already in the group for this post
+    const isUserInGroup = group.users.some(
+      (user) => user.toString() === joinRequest.userId.toString()
+    );
+
+    if (isUserInGroup) {
+      // If user is already in the group, just remove the join request and return a success response
+      await joinRequest.deleteOne();
+      return res.status(200).json({
+        success: true,
+        message:
+          "User is already a member of the group for this post, join request removed.",
+        group,
+      });
+    }
+
+    // If group exists and user is not in the group, add the user
+    group.users.push(joinRequest.userId.toString());
+    await group.save();
+
+    // Add group to the accepted user's group array
+    await User.findByIdAndUpdate(
+      joinRequest.userId,
+      {
+        $push: { groups: group._id },
+      },
+      { new: true, upsert: true }
+    );
+
+    // Now handle trip member addition to the post
+    if (!post.tripMembers) {
+      post.tripMembers = []; // Initialize tripMembers array if it doesn't exist
+    }
+
+    if (!post.tripMembers.includes(joinRequest.userId.toString())) {
+      post.tripMembers.push(joinRequest.userId.toString());
+      await post.save();
+    }
+
+    // Remove the join request since it has been approved
     await joinRequest.deleteOne();
 
     return res.status(200).json({
       success: true,
-      message: "User added to the trip",
+      message: "User added to the existing group for this post.",
+      group,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error accepting join request:", error);
     return res
       .status(500)
-      .json({ success: false, message: "Server error. Try again." });
+      .json({ success: false, message: "Server error. Please try again." });
   }
 };
 
@@ -497,5 +617,30 @@ export const getJoinRequests = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error. Please try again." });
+  }
+};
+
+// Get Group by Post ID
+export const getGroupByPostId = async (req, res) => {
+  try {
+    const { postId } = req.params; // Get the post ID from the route parameters
+    console.log("Fetching group for postId:", postId);
+
+    // Find the group associated with the given post ID
+    const group = await Group.findOne({ postId }).populate(
+      "users",
+      "firstName lastName"
+    );
+
+    if (!group) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Group not found" });
+    }
+
+    res.status(200).json({ success: true, data: group });
+  } catch (error) {
+    console.error("Error fetching group details:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
