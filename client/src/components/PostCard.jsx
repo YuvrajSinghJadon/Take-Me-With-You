@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import moment from "moment";
 import { NoProfile } from "../assets";
 import { BiComment } from "react-icons/bi"; // For Queries
@@ -14,6 +14,7 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
   const [comments, setComments] = useState(post?.comments || []); // Existing comments
   const [showComments, setShowComments] = useState(false); // Toggle to show/hide comments
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const getComments = async () => {
     setLoading(true);
@@ -52,6 +53,7 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
       console.error("Error adding comment:", error);
     }
   };
+
   // Function to add a reply
   const addReply = async (replyData) => {
     try {
@@ -79,23 +81,34 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
     }
     setShowComments(!showComments); // Toggle comment section
   };
+
+  // Function to handle click on TripDetails section
+  const goToPostDetails = (e) => {
+    e.stopPropagation(); // Prevent the event from bubbling up
+    navigate(`/posts/${post._id}`); // Redirect to PostDetails page with the post ID
+  };
+
+  const goToProfilePage = () => {
+    navigate(`/profile/${post?.userId?._id}`); // Redirect to Profile page
+  };
+
   return (
-    <div className="mb-2 bg-primary p-4 rounded-xl cursor-pointer ">
+    <div
+      className="mb-2 bg-primary p-4 rounded-xl cursor-pointer"
+      onClick={goToProfilePage}
+    >
+      {/* Top Part of the Card - Redirects to user profile */}
       <div className="flex gap-3 items-center mb-2">
-        <Link to={`/profile/${post?.userId?._id}`}>
-          <img
-            src={post?.userId?.profileUrl ?? NoProfile}
-            alt={post?.userId?.firstName}
-            className="w-14 h-14 object-cover rounded-full"
-          />
-        </Link>
+        <img
+          src={post?.userId?.profileUrl ?? NoProfile}
+          alt={post?.userId?.firstName}
+          className="w-14 h-14 object-cover rounded-full"
+        />
         <div className="w-full flex justify-between">
           <div>
-            <Link to={`/profile/${post?.userId?._id}`}>
-              <p className="font-medium text-lg text-ascent-1">
-                {post?.userId?.firstName} {post?.userId?.lastName}
-              </p>
-            </Link>
+            <p className="font-medium text-lg text-ascent-1">
+              {post?.userId?.firstName} {post?.userId?.lastName}
+            </p>
             <span className="text-ascent-2">{post?.userId?.location}</span>
           </div>
           <span className="text-ascent-2">
@@ -104,8 +117,8 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
         </div>
       </div>
 
-      <div>
-        {/* Trip details */}
+      {/* TripDetails part - Redirects to post details */}
+      <div className="cursor-pointer" onClick={goToPostDetails}>
         {post?.imageUrl && (
           <img
             src={post?.imageUrl}
@@ -127,31 +140,37 @@ const PostCard = ({ post, user, deletePost, joinTrip }) => {
 
       {/* Join and Query Buttons */}
       <div className="mt-4 flex justify-between items-center px-3 py-2 text-ascent-2 text-base border-t border-[#66666645]">
-        {/* Show "Request to Join" only if the logged-in user is not the post owner */}
         {user?._id !== post?.userId?._id && (
           <p
             className="flex gap-2 items-center text-base cursor-pointer"
-            onClick={() => joinTrip(post._id)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent event bubbling
+              joinTrip(post._id);
+            }}
           >
             <FaUserPlus size={20} />
             Request to Join
           </p>
         )}
 
-        {/* Toggle Comments Section */}
         <p
           className="flex gap-2 items-center text-base cursor-pointer"
-          onClick={toggleComments}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent event bubbling
+            toggleComments();
+          }}
         >
           <BiComment size={20} />
           {post?.comments?.length} Queries
         </p>
 
-        {/* Show Delete button if the logged-in user is the post owner */}
         {user?._id === post?.userId?._id && (
           <div
             className="flex gap-1 items-center text-base text-ascent-1 cursor-pointer"
-            onClick={() => deletePost(post?._id)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent event bubbling
+              deletePost(post?._id);
+            }}
           >
             <MdOutlineDeleteOutline size={20} />
             <span>Delete</span>

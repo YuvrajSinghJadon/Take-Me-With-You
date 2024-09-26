@@ -2,23 +2,31 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Loading from "./Loading"; // Assuming you have a loading component
 
-const JoinRequests = ({ postId }) => {
+const JoinRequests = ({ posts }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch join requests when the component mounts
+  // Fetch join requests for all posts when the component mounts
   useEffect(() => {
     const fetchJoinRequests = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/posts/join-requests/${postId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        setRequests(response.data.data);
+        const allRequests = [];
+
+        // Fetch join requests for each post
+        for (const post of posts) {
+          const response = await axios.get(
+            `${import.meta.env.VITE_API_URL}/posts/join-requests/${post._id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          // Combine all join requests into one array
+          allRequests.push(...response.data.data);
+        }
+
+        setRequests(allRequests);
       } catch (error) {
         console.error("Error fetching join requests:", error);
       } finally {
@@ -27,7 +35,9 @@ const JoinRequests = ({ postId }) => {
     };
 
     fetchJoinRequests();
-  }, [postId]);
+  }, [posts]);
+
+  
 
   // Function to handle accepting the request
   const acceptRequest = async (requestId) => {
@@ -45,6 +55,7 @@ const JoinRequests = ({ postId }) => {
       );
 
       if (response.data.success) {
+        alert(response.data.message);
         // Remove the request from the list
         setRequests((prevRequests) =>
           prevRequests.filter((request) => request._id !== requestId)
@@ -89,7 +100,6 @@ const JoinRequests = ({ postId }) => {
   if (loading) {
     return <Loading />; // Show loading spinner if data is still loading
   }
-
   return (
     <div className="w-full bg-white rounded-lg shadow-lg p-4">
       {/* Header showing total join requests */}
