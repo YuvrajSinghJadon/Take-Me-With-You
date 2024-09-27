@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+import { useSelector } from "react-redux"; // Assuming you have Redux to get the logged-in user
 
 const socket = io("http://localhost:8800"); // Connect to backend
 
 const GroupChat = ({ roomId }) => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const { user } = useSelector((state) => state.user); // Assuming user is stored in Redux
 
   useEffect(() => {
     // Join the specified room when the component mounts
@@ -16,17 +18,34 @@ const GroupChat = ({ roomId }) => {
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
 
+    // Load past messages when joining
+    socket.on("loadMessages", (chatHistory) => {
+      setMessages(chatHistory);
+    });
+
+    // Handle when the user is removed from the group
+    socket.on("removedFromGroup", (groupId) => {
+      if (roomId === groupId) {
+        alert("You have been removed from the group.");
+        // Optionally, redirect the user away from the chat
+      }
+    });
+
     // Clean up the socket listener on unmount
     return () => {
       socket.off("receiveMessage");
-      socket.emit("leaveRoom", roomId); // Optional: Leave the room when leaving the component
+      socket.emit("leaveRoom", roomId); // Leave the room when leaving the component
     };
   }, [roomId]);
 
   const sendMessage = () => {
-    if (message) {
-      // Send the message along with the roomId to the server
-      socket.emit("sendMessage", { message, roomId });
+    if (message && user?._id) {
+      // Send the message along with the roomId and userId
+      socket.emit("sendMessage", {
+        message,
+        groupId: roomId, // Correctly pass the groupId (roomId)
+        senderId: user._id, // Use the actual user ID from Redux
+      });
       setMessage(""); // Clear the input
     }
   };
@@ -37,7 +56,8 @@ const GroupChat = ({ roomId }) => {
       <div className="chat-box">
         {messages.map((msg, index) => (
           <div key={index} className="message">
-            {msg}
+            {msg.message} - {msg.sender.firstName}{" "}
+            {/* Ensure sender.firstName is available */}
           </div>
         ))}
       </div>

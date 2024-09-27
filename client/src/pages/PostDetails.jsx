@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Loading from "../components/Loading";
+import GroupChat from "../components/GroupChat"; // Import GroupChat component
 
 const PostDetails = ({ user }) => {
   const { id } = useParams(); // Get the post ID from the URL
@@ -89,33 +90,33 @@ const PostDetails = ({ user }) => {
               </p>
             </div>
 
-            {/* Group Info (Right Section) */}
-            {group ? (
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full lg:w-1/3">
-                <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                  Trip Group
-                </h3>
-                <ul className="text-gray-700 dark:text-gray-300">
-                  {group.users.map((member) => (
-                    <li key={member._id} className="mb-2">
-                      {member.firstName} {member.lastName}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : groupError ? (
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full lg:w-1/3">
+            {/* Group Info and Group Chat (Right Section) */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full lg:w-1/3">
+              {group ? (
+                <>
+                  <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                    Trip Group
+                  </h3>
+                  <ul className="text-gray-700 dark:text-gray-300 mb-4">
+                    {group.users.map((member) => (
+                      <li key={member._id} className="mb-2">
+                        {member.firstName} {member.lastName}
+                      </li>
+                    ))}
+                  </ul>
+                  {/* Group Chat Component */}
+                  <GroupChat roomId={group._id} /> {/* Pass the group ID */}
+                </>
+              ) : groupError ? (
                 <p className="text-gray-700 dark:text-gray-300">
                   No group formed.
                 </p>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full lg:w-1/3">
+              ) : (
                 <p className="text-gray-700 dark:text-gray-300">
                   Loading group information...
                 </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </>
       )}

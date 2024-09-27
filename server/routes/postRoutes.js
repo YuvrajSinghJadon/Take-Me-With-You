@@ -16,6 +16,7 @@ import {
   acceptJoinRequest,
   rejectJoinRequest,
   getGroupByPostId,
+  removeUserFromGroup,
 } from "../controllers/postController.js";
 import { upload } from "../middleware/multerMiddleware.js";
 
@@ -61,4 +62,6 @@ router.post("/reject-join-request/:requestId", userAuth, rejectJoinRequest);
 // Route to get group by post ID
 router.get("/group/:postId",userAuth,  getGroupByPostId);
 
+
+router.post("/group/remove-user/:postId", userAuth, removeUserFromGroup);
 export default router;

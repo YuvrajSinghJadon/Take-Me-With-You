@@ -9,24 +9,23 @@ const groupSchema = new mongoose.Schema(
     },
     postId: {
       type: Schema.Types.ObjectId,
-      ref: "Posts", // Reference to the post related to this group
+      ref: "Posts",
     },
     owner: {
       type: Schema.Types.ObjectId,
-      ref: "Users", // Reference to the user who owns/created the group
+      ref: "Users",
       required: true,
     },
     users: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Users", // List of users who are members of this group
+        ref: "Users",
       },
     ],
     messages: [
       {
-        sender: { type: Schema.Types.ObjectId, ref: "Users" }, // Who sent the message
-        message: { type: String },
-        timestamp: { type: Date, default: Date.now },
+        type: Schema.Types.ObjectId,
+        ref: "Messages", // Array of message references
       },
     ],
   },
