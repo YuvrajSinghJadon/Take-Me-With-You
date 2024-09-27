@@ -60,8 +60,7 @@ router.post("/accept-join-request/:requestId", userAuth, acceptJoinRequest);
 router.post("/reject-join-request/:requestId", userAuth, rejectJoinRequest);
 
 // Route to get group by post ID
-router.get("/group/:postId",userAuth,  getGroupByPostId);
+router.get("/group/:postId", userAuth, getGroupByPostId);
 
-
-router.post("/group/remove-user/:postId", userAuth, removeUserFromGroup);
+router.delete("/groups/:groupId/remove/:userId", userAuth, removeUserFromGroup);
 export default router;

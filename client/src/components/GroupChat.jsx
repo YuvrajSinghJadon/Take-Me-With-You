@@ -14,9 +14,9 @@ const GroupChat = ({ roomId }) => {
   const { user } = useSelector((state) => state.user);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
-
+  const [isChatAccessible, setIsChatAccessible] = useState(true);
   useEffect(() => {
-    socket.emit("joinRoom", roomId);
+    socket.emit("joinRoom", { roomId, userId: user._id });
 
     socket.on("receiveMessage", (newMessage) => {
       setMessages((prevMessages) => [...prevMessages, newMessage]);
@@ -27,7 +27,10 @@ const GroupChat = ({ roomId }) => {
       setMessages(chatHistory);
       scrollToBottom();
     });
-
+    socket.on("accessDenied", (message) => {
+      alert(message);
+      setIsChatAccessible(false); // This state disables the chat
+    });
     socket.on("messageDeleted", (messageId) => {
       setMessages((prevMessages) =>
         prevMessages.filter((msg) => msg._id !== messageId)
@@ -113,103 +116,111 @@ const GroupChat = ({ roomId }) => {
       </div>
 
       {/* Messages List */}
-      <div
-        className="flex-1 overflow-y-auto p-4 space-y-4"
-        ref={chatContainerRef}
-      >
-        {messages.length > 0 ? (
-          <>
-            {messages.map((msg, index) => {
-              const isSameUser = msg.sender._id === user._id;
-              const showDate =
-                index === 0 ||
-                !moment(messages[index - 1].createdAt).isSame(
-                  msg.createdAt,
-                  "day"
-                );
-              return (
-                <div key={index}>
-                  {showDate && (
-                    <div className="text-center text-xs text-gray-500 my-2 sticky top-0">
-                      {renderDateGroup(msg.createdAt)}
-                    </div>
-                  )}
-
-                  {/* Align messages based on the sender */}
-                  <div
-                    className={`flex ${
-                      isSameUser ? "justify-start" : "justify-end"
-                    } items-start`}
-                  >
-                    <div
-                      className={`relative ${
-                        isSameUser
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-200 text-black"
-                      } p-3 rounded-lg max-w-xs break-words shadow-md`}
-                    >
-                      <p className="text-sm">{msg.message}</p>
-                      <span className="block text-xs opacity-75 mt-1">
-                        {msg.sender.firstName} -{" "}
-                        {moment(msg.createdAt).fromNow()}
-                      </span>
-
-                      {/* Edit/Delete icons for the user */}
-                      {isSameUser && (
-                        <div className="absolute right-0 top-0 flex space-x-1">
-                          <FaEdit
-                            onClick={() => handleEdit(msg._id, msg.message)}
-                            className="text-white cursor-pointer hover:text-yellow-300"
-                          />
-                          <FaTrashAlt
-                            onClick={() => handleDelete(msg._id)}
-                            className="text-white cursor-pointer hover:text-red-500"
-                          />
+      {isChatAccessible ? (
+        <>
+          <div
+            className="flex-1 overflow-y-auto p-4 space-y-4"
+            ref={chatContainerRef}
+          >
+            {messages.length > 0 ? (
+              <>
+                {messages.map((msg, index) => {
+                  const isSameUser = msg.sender._id === user._id;
+                  const showDate =
+                    index === 0 ||
+                    !moment(messages[index - 1].createdAt).isSame(
+                      msg.createdAt,
+                      "day"
+                    );
+                  return (
+                    <div key={index}>
+                      {showDate && (
+                        <div className="text-center text-xs text-gray-500 my-2 sticky top-0">
+                          {renderDateGroup(msg.createdAt)}
                         </div>
                       )}
+
+                      {/* Align messages based on the sender */}
+                      <div
+                        className={`flex ${
+                          isSameUser ? "justify-start" : "justify-end"
+                        } items-start`}
+                      >
+                        <div
+                          className={`relative ${
+                            isSameUser
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-200 text-black"
+                          } p-3 rounded-lg max-w-xs break-words shadow-md`}
+                        >
+                          <p className="text-sm">{msg.message}</p>
+                          <span className="block text-xs opacity-75 mt-1">
+                            {msg.sender.firstName} -{" "}
+                            {moment(msg.createdAt).fromNow()}
+                          </span>
+
+                          {/* Edit/Delete icons for the user */}
+                          {isSameUser && (
+                            <div className="absolute right-0 top-0 flex space-x-1">
+                              <FaEdit
+                                onClick={() => handleEdit(msg._id, msg.message)}
+                                className="text-white cursor-pointer hover:text-yellow-300"
+                              />
+                              <FaTrashAlt
+                                onClick={() => handleDelete(msg._id)}
+                                className="text-white cursor-pointer hover:text-red-500"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </>
-        ) : (
-          <p className="text-center text-gray-500">No messages yet...</p>
-        )}
-      </div>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </>
+            ) : (
+              <p className="text-center text-gray-500">No messages yet...</p>
+            )}
+          </div>
 
-      {/* Typing Indicator */}
-      {typingStatus && (
-        <div className="p-2 text-xs text-gray-400">{typingStatus}</div>
+          {/* Typing Indicator */}
+          {typingStatus && (
+            <div className="p-2 text-xs text-gray-400">{typingStatus}</div>
+          )}
+
+          {/* Message Input */}
+          <div className="bg-white dark:bg-gray-700 p-4 rounded-b-lg flex items-center space-x-4">
+            <button
+              className="text-gray-500 hover:text-gray-700"
+              onClick={() => {}}
+            >
+              <FaSmile size={20} />
+            </button>
+            <button className="text-gray-500 hover:text-gray-700">
+              <FaPaperclip size={20} />
+            </button>
+            <input
+              type="text"
+              className="flex-1 bg-gray-200 dark:bg-gray-600 text-black dark:text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={message}
+              onChange={handleTyping}
+              onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Type a message..."
+            />
+            <button
+              className="bg-blue-500 text-white p-3 rounded-lg shadow hover:bg-blue-600 transition"
+              onClick={sendMessage}
+            >
+              Send
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="p-4 text-center text-red-500">
+          You are no longer a member of this group.
+        </div>
       )}
-
-      {/* Message Input */}
-      <div className="bg-white dark:bg-gray-700 p-4 rounded-b-lg flex items-center space-x-4">
-        <button
-          className="text-gray-500 hover:text-gray-700"
-          onClick={() => {}}
-        >
-          <FaSmile size={20} />
-        </button>
-        <button className="text-gray-500 hover:text-gray-700">
-          <FaPaperclip size={20} />
-        </button>
-        <input
-          type="text"
-          className="flex-1 bg-gray-200 dark:bg-gray-600 text-black dark:text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={message}
-          onChange={handleTyping}
-          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Type a message..."
-        />
-        <button
-          className="bg-blue-500 text-white p-3 rounded-lg shadow hover:bg-blue-600 transition"
-          onClick={sendMessage}
-        >
-          Send
-        </button>
-      </div>
     </div>
   );
 };

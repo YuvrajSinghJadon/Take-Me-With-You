@@ -11,14 +11,14 @@ export const initializeSocket = (server) => {
 
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
-
     // User joins a group chat room
-    socket.on("joinRoom", async (groupId) => {
-      socket.join(groupId);
-      console.log(`User joined room: ${groupId}`);
+    socket.on("joinRoom", async ({ roomId, userId }) => {
+      console.log(`User joining room: ${roomId}, with userId: ${userId}`); // Debug log
 
-      // Send the chat history to the user when they join, populating the sender details
-      const group = await Group.findById(groupId).populate({
+      socket.join(roomId); // Only join the room after verification
+
+      // Fetch the group based on roomId
+      const group = await Group.findById(roomId).populate({
         path: "messages",
         populate: {
           path: "sender",
@@ -26,9 +26,30 @@ export const initializeSocket = (server) => {
         },
       });
 
-      if (group) {
-        socket.emit("loadMessages", group.messages);
+      console.log("Fetched Group:", group); // Debug log
+
+      // If group not found, handle the case
+      if (!group) {
+        socket.emit("error", "Group not found.");
+        return;
       }
+
+      // Check if the user is part of the group
+      const isUserInGroup = group.users.some(
+        (groupUser) => groupUser.toString() === userId
+      );
+
+      if (!isUserInGroup) {
+        // Emit message only to the current user, not the entire room
+        socket.emit(
+          "accessDenied",
+          "You are no longer a member of this group."
+        );
+        return;
+      }
+
+      // If the user is part of the group, send the chat history
+      socket.emit("loadMessages", group.messages);
     });
 
     // User sends a message
@@ -39,6 +60,16 @@ export const initializeSocket = (server) => {
           sender: senderId,
           message,
         });
+        const group = await Group.findById(groupId);
+        // Check if the sender is still part of the group
+        if (!group.users.includes(senderId)) {
+          socket.emit(
+            "accessDenied",
+            "You are no longer a member of this group."
+          );
+          return;
+        }
+
         // Populate the sender details when sending the message back to the client
         const populatedMessage = await Message.findById(
           newMessage._id
