@@ -5,6 +5,7 @@ import { useSelector } from "react-redux"; // Add this line to use Redux state
 import Loading from "../components/Loading";
 import GroupChat from "../components/GroupChat";
 import { FaTrashAlt } from "react-icons/fa"; // Import Trash Icon
+import JoinRequests from "../components/JoinRequests";
 
 const PostDetails = () => {
   const { id } = useParams(); // Get the post ID from the URL
@@ -13,7 +14,7 @@ const PostDetails = () => {
   const [group, setGroup] = useState(null); // Store the group information
   const [groupError, setGroupError] = useState(false); // Store group fetch error
   const [isChatOpen, setIsChatOpen] = useState(false); // Modal state for Group Chat
-
+  const [joinRequests, setJoinRequests] = useState([]);
   // Get the logged-in user from Redux store
   const { user } = useSelector((state) => state.user);
 
@@ -51,6 +52,19 @@ const PostDetails = () => {
             console.error("Error fetching group:", groupError);
           }
         }
+
+        // Fetch join requests for this post
+        const joinRequestsResponse = await axios.get(
+          `${import.meta.env.VITE_API_URL}/posts/join-requests/${
+            response.data.data._id
+          }/`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setJoinRequests(joinRequestsResponse.data.requests);
       } catch (error) {
         console.error("Error fetching post details:", error);
       } finally {
@@ -60,7 +74,7 @@ const PostDetails = () => {
 
     fetchPostDetails();
   }, [id]);
-
+  console.log(post);
   // Handle user removal
   const handleRemoveUser = async (userId) => {
     try {
@@ -178,7 +192,11 @@ const PostDetails = () => {
               </div>
             )}
           </div>
-
+          {user?._id === post.userId?._id && (
+            <div className=" w-1/4 mt-5">
+              <JoinRequests posts={[post]} />
+            </div>
+          )}
           {/* Modal for Group Chat */}
           {isChatOpen && group && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">

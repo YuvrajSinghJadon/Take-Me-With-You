@@ -53,6 +53,7 @@ router.delete("/:id", userAuth, deletePost);
 
 // Create a join trip request
 router.post("/join-request/:id", userAuth, createJoinRequest);
+
 // Get all join requests for a specific trip
 router.get("/join-requests/:id", userAuth, getJoinRequests);
 // Accept and reject join requests
