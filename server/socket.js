@@ -17,8 +17,15 @@ export const initializeSocket = (server) => {
       socket.join(groupId);
       console.log(`User joined room: ${groupId}`);
 
-      // Send the chat history to the user when they join
-      const group = await Group.findById(groupId).populate("messages");
+      // Send the chat history to the user when they join, populating the sender details
+      const group = await Group.findById(groupId).populate({
+        path: "messages",
+        populate: {
+          path: "sender",
+          select: "firstName lastName", // Only select necessary fields
+        },
+      });
+
       if (group) {
         socket.emit("loadMessages", group.messages);
       }
@@ -32,6 +39,10 @@ export const initializeSocket = (server) => {
           sender: senderId,
           message,
         });
+        // Populate the sender details when sending the message back to the client
+        const populatedMessage = await Message.findById(
+          newMessage._id
+        ).populate("sender", "firstName lastName");
 
         // Add the message to the group's messages array
         await Group.findByIdAndUpdate(groupId, {
@@ -39,7 +50,7 @@ export const initializeSocket = (server) => {
         });
 
         // Broadcast the message to everyone in the room
-        io.to(groupId).emit("receiveMessage", newMessage);
+        io.to(groupId).emit("receiveMessage", populatedMessage);
       } catch (error) {
         console.error("Error sending message:", error);
       }
