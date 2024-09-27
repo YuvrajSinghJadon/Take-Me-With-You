@@ -619,3 +619,27 @@ export const getGroupByPostId = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+// Remove a user from the group (admin action)
+export const removeUserFromGroup = async (req, res) => {
+  try {
+    const { groupId, userId } = req.params;
+    const { userId: adminId } = req.user; // Group owner/admin
+
+    // Find the group and ensure the request is coming from the group owner
+    const group = await Group.findById(groupId);
+    if (!group || group.owner.toString() !== adminId) {
+      return res.status(403).json({ message: "Unauthorized action" });
+    }
+
+    // Remove the user from the group
+    await Group.findByIdAndUpdate(groupId, {
+      $pull: { users: userId },
+    });
+
+    return res.status(200).json({ message: "User removed from group" });
+  } catch (error) {
+    console.error("Error removing user:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
