@@ -28,12 +28,28 @@ const GroupChat = ({ roomId }) => {
       scrollToBottom();
     });
 
+    socket.on("messageDeleted", (messageId) => {
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg._id !== messageId)
+      );
+    });
+
+    socket.on("messageEdited", (updatedMessage) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+          msg._id === updatedMessage._id ? updatedMessage : msg
+        )
+      );
+    });
+
     socket.on("typing", (data) => {
       setTypingStatus(data ? `${data} is typing...` : "");
     });
 
     return () => {
       socket.off("receiveMessage");
+      socket.off("messageDeleted");
+      socket.off("messageEdited");
       socket.emit("leaveRoom", roomId);
     };
   }, [roomId]);
@@ -73,7 +89,7 @@ const GroupChat = ({ roomId }) => {
   };
 
   const handleDelete = (messageId) => {
-    socket.emit("deleteMessage", messageId);
+    socket.emit("deleteMessage", { messageId, groupId: roomId });
   };
 
   const renderDateGroup = (date) => {
@@ -104,9 +120,7 @@ const GroupChat = ({ roomId }) => {
         {messages.length > 0 ? (
           <>
             {messages.map((msg, index) => {
-              const isSameUser = msg.sender._id === user._id; // Fix conditional here
-              // Add log for debugging
-
+              const isSameUser = msg.sender._id === user._id;
               const showDate =
                 index === 0 ||
                 !moment(messages[index - 1].createdAt).isSame(
@@ -121,7 +135,7 @@ const GroupChat = ({ roomId }) => {
                     </div>
                   )}
 
-                  {/* If the user is the sender, align to the left. Otherwise, align to the right */}
+                  {/* Align messages based on the sender */}
                   <div
                     className={`flex ${
                       isSameUser ? "justify-start" : "justify-end"

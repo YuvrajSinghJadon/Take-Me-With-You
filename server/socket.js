@@ -55,7 +55,38 @@ export const initializeSocket = (server) => {
         console.error("Error sending message:", error);
       }
     });
+    // Handle message deletion
+    socket.on("deleteMessage", async ({ messageId, groupId }) => {
+      try {
+        await Message.findByIdAndDelete(messageId);
 
+        // Remove the message from the group's messages array
+        await Group.findByIdAndUpdate(groupId, {
+          $pull: { messages: messageId },
+        });
+
+        // Broadcast message deletion to all users in the room
+        io.to(groupId).emit("messageDeleted", messageId);
+      } catch (error) {
+        console.error("Error deleting message:", error);
+      }
+    });
+
+    // Handle message editing
+    socket.on("editMessage", async ({ messageId, message, groupId }) => {
+      try {
+        const updatedMessage = await Message.findByIdAndUpdate(
+          messageId,
+          { message },
+          { new: true }
+        ).populate("sender", "firstName lastName");
+
+        // Broadcast the updated message to all users in the room
+        io.to(groupId).emit("messageEdited", updatedMessage);
+      } catch (error) {
+        console.error("Error editing message:", error);
+      }
+    });
     // Group owner removes a user from the group
     socket.on("removeUser", async ({ groupId, userId }) => {
       try {
