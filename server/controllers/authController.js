@@ -35,6 +35,8 @@ export const register = async (req, res, next) => {
       password: hashedPassword,
       whatsappNumber,
       token: hashedToken, // Store the hashed token
+      joinRequests: [], 
+      groups: [], 
       createdAt: Date.now(),
       expiresAt: Date.now() + 3600000, // 1 hour expiry for the token
     });
@@ -57,6 +59,8 @@ export const register = async (req, res, next) => {
     return res.status(500).json({ message: "Server error. Try again later." });
   }
 };
+
+// Verify email
 export const verifyEmail = async (req, res) => {
   const { token } = req.params; // Get the token from the URL
 
@@ -84,7 +88,7 @@ export const verifyEmail = async (req, res) => {
     }
 
     // Create the user now that the email is verified
-    const { firstName, lastName, email, password, whatsappNumber } =
+    const { firstName, lastName, email, password, whatsappNumber, joinRequests, groups } =
       verificationRecord;
 
     const user = await Users.create({
@@ -94,6 +98,8 @@ export const verifyEmail = async (req, res) => {
       password, // Password is already hashed
       whatsappNumber,
       verified: true,
+      joinRequests: [], // Initialize as an empty array
+      groups: [], 
     });
 
     // Delete the verification record after user creation
@@ -109,6 +115,9 @@ export const verifyEmail = async (req, res) => {
     res.status(500).json({ message: "Server error. Try again later." });
   }
 };
+
+
+// Login user
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
   // Validation

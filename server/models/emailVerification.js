@@ -7,6 +7,8 @@ const emailVerificationSchema = new mongoose.Schema({
   password: { type: String, required: true },
   whatsappNumber: { type: String, required: true },
   token: { type: String, required: true },
+  JoinRequests: [],
+  groups: [],
   createdAt: { type: Date, required: true },
   expiresAt: { type: Date, required: true },
 });
