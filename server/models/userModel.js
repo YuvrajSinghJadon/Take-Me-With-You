@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-//schema
+// User schema
 const userSchema = new mongoose.Schema(
   {
     firstName: {
@@ -13,13 +13,13 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, " Email is Required!"],
+      required: [true, "Email is Required!"],
       unique: true,
     },
     password: {
       type: String,
       required: [true, "Password is Required!"],
-      minlength: [6, "Password length should be greater than 6 character"],
+      minlength: [6, "Password length should be greater than 6 characters"],
       select: true,
     },
     location: { type: String },
@@ -29,7 +29,17 @@ const userSchema = new mongoose.Schema(
     views: [{ type: String }],
     verified: { type: Boolean, default: false },
     whatsappNumber: { type: String, required: true },
-    groups: [{ type: Schema.Types.ObjectId, ref: "Groups" }], // Assuming a separate Group model for chat groups
+    groups: [{ type: Schema.Types.ObjectId, ref: "Groups" }],
+    joinRequests: [
+      {
+        postId: { type: Schema.Types.ObjectId, ref: "Posts" }, // Reference to the post
+        status: {
+          type: String,
+          enum: ["Pending", "Accepted", "Rejected"], // Status of the join request
+          default: "Pending",
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

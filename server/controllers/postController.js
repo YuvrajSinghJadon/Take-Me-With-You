@@ -1,6 +1,6 @@
 import Comments from "../models/commentModel.js";
 import Group from "../models/Groups.js";
-import User from "../models/userModel.js";
+import Users from "../models/userModel.js";
 import Posts from "../models/PostModel.js";
 import JoinRequests from "../models/joinRequests.js";
 import { uploadOnCloudinary } from "../utils/uploadFiles.js";
@@ -389,18 +389,20 @@ export const createJoinRequest = async (req, res) => {
 
     // Fetch the post by its ID
     const post = await Posts.findById(id);
-
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
     // Check if the user has already sent a join request for this post
-    const existingRequest = await JoinRequests.findOne({ postId: id, userId });
+    const user = await Users.findById(userId);
+    const existingRequest = user.joinRequests.find(
+      (request) => request.postId.toString() === id
+    );
 
     if (existingRequest) {
-      return res.status(200).json({
+      return res.status(400).json({
         success: false,
-        message: "You have already sent a join request for this post.",
+        message: "You have already made a join request for this post.",
       });
     }
 
@@ -408,7 +410,19 @@ export const createJoinRequest = async (req, res) => {
     const joinRequest = await JoinRequests.create({
       postId: id,
       userId,
+      status: "Pending",
     });
+
+    // Add the join request to the user's joinRequests array
+    await Users.findByIdAndUpdate(
+      userId,
+      {
+        $push: {
+          joinRequests: { postId: id, status: "Pending" },
+        },
+      },
+      { new: true, upsert: true }
+    );
 
     // Push the newly created join request into the post's joinRequests array
     post.joinRequests.push(joinRequest._id);
@@ -425,14 +439,14 @@ export const createJoinRequest = async (req, res) => {
   }
 };
 
+// Accept Join Request
 export const acceptJoinRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
-    const { userId } = req.user; // The user (post creator) accepting the request
+    const { userId } = req.user; // Post creator
 
     // Find the join request
     const joinRequest = await JoinRequests.findById(requestId);
-
     if (!joinRequest) {
       return res
         .status(404)
@@ -441,7 +455,6 @@ export const acceptJoinRequest = async (req, res) => {
 
     // Find the post related to the join request
     const post = await Posts.findById(joinRequest.postId);
-
     if (!post || post.userId.toString() !== userId.toString()) {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
@@ -449,97 +462,56 @@ export const acceptJoinRequest = async (req, res) => {
     // Check if a group exists for this specific post
     let group = await Group.findOne({ postId: post._id });
 
-    // Log the post creator and post ID to ensure it's specific to the post
-    console.log("Post creator:", post.userId);
-    console.log("Post ID:", post._id); // Log to confirm the correct post is being handled
-
-    // If no group exists for this post, create a new one
+    // If no group exists, create a new one
     if (!group) {
       group = new Group({
-        groupName: `Group for ${post.description.slice(0, 11)}`, // Group name based on post title
-        postId: post._id, // Associate the group with the specific post
+        groupName: `Group for ${post.description.slice(0, 11)}`, // Group name based on post description
+        postId: post._id, // Associate the group with the post
         owner: post.userId.toString(), // Owner is the post creator
         users: [post.userId.toString(), joinRequest.userId.toString()], // Add post creator and accepted user
       });
 
       await group.save();
-      console.log("Group created for post:", post._id);
 
-      // Update users (creator and accepted user) to include this group in their groups array
-      await User.findByIdAndUpdate(
+      // Update the user’s groups array (post owner)
+      await Users.findByIdAndUpdate(
         post.userId,
-        {
-          $push: { groups: group._id },
-        },
+        { $push: { groups: group._id } },
         { new: true, upsert: true }
       );
 
-      await User.findByIdAndUpdate(
+      // Update the accepted user's groups array
+      await Users.findByIdAndUpdate(
         joinRequest.userId,
-        {
-          $push: { groups: group._id },
-        },
+        { $push: { groups: group._id } },
         { new: true, upsert: true }
       );
-
-      // Remove the join request after user is added to group
-      await joinRequest.deleteOne();
-
-      return res.status(201).json({
-        success: true,
-        message: "Group created and user added to the group for the post.",
-        group,
-      });
+    } else {
+      // If the group already exists, add the user if not already a member
+      if (!group.users.includes(joinRequest.userId.toString())) {
+        group.users.push(joinRequest.userId.toString());
+        await group.save();
+      }
     }
 
-    // Log group information to verify it's correct for this specific post
-    console.log("Group found for post:", group.postId);
-
-    // Check if the user is already in the group for this post
-    const isUserInGroup = group.users.some(
-      (user) => user.toString() === joinRequest.userId.toString()
-    );
-
-    if (isUserInGroup) {
-      // If user is already in the group, just remove the join request and return a success response
-      await joinRequest.deleteOne();
-      return res.status(200).json({
-        success: true,
-        message:
-          "User is already a member of the group for this post, join request removed.",
-        group,
-      });
-    }
-
-    // If group exists and user is not in the group, add the user
-    group.users.push(joinRequest.userId.toString());
-    await group.save();
-
-    // Add group to the accepted user's group array
-    await User.findByIdAndUpdate(
-      joinRequest.userId,
-      {
-        $push: { groups: group._id },
-      },
-      { new: true, upsert: true }
-    );
-
-    // Now handle trip member addition to the post
-    if (!post.tripMembers) {
-      post.tripMembers = []; // Initialize tripMembers array if it doesn't exist
-    }
-
+    // Add the user to the trip members of the post (if not already added)
     if (!post.tripMembers.includes(joinRequest.userId.toString())) {
       post.tripMembers.push(joinRequest.userId.toString());
       await post.save();
     }
 
-    // Remove the join request since it has been approved
+    // Update the status of the join request to "Approved" in the User's joinRequests array
+    await Users.updateOne(
+      { _id: joinRequest.userId, "joinRequests.postId": joinRequest.postId },
+      { $set: { "joinRequests.$.status": "Approved" } }
+    );
+
+    // Remove the join request from the JoinRequests schema
     await joinRequest.deleteOne();
 
     return res.status(200).json({
       success: true,
-      message: "User added to the existing group for this post.",
+      message: "Join request approved, and user added to the group.",
       group,
     });
   } catch (error) {
@@ -554,33 +526,36 @@ export const acceptJoinRequest = async (req, res) => {
 export const rejectJoinRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
+
+    // Find the join request
     const joinRequest = await JoinRequests.findById(requestId).populate(
       "postId"
     );
-
     if (!joinRequest) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Join request not found" });
+      return res.status(404).json({ message: "Join request not found" });
     }
 
     const post = await Posts.findById(joinRequest.postId);
     if (!post || post.userId.toString() !== req.user.userId) {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
-    // Use deleteOne to remove the join request
+    // Update the status in the user's joinRequests array to "Rejected"
+    await Users.updateOne(
+      { _id: joinRequest.userId, "joinRequests.postId": joinRequest.postId },
+      { $set: { "joinRequests.$.status": "Rejected" } }
+    );
+
+    // Remove the join request from the JoinRequests schema
     await joinRequest.deleteOne();
 
     return res.status(200).json({
       success: true,
-      message: "Join request rejected",
+      message: "Join request rejected.",
     });
   } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Server error. Try again." });
+    console.error("Error rejecting join request:", error);
+    return res.status(500).json({ message: "Server error. Please try again." });
   }
 };
 
