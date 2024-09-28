@@ -6,7 +6,6 @@ import Loading from "../components/Loading";
 import GroupChat from "../components/GroupChat";
 import { FaTrashAlt } from "react-icons/fa"; // Import Trash Icon
 import JoinRequests from "../components/JoinRequests";
-import ExpenseTrackerModal from "../components/ExpenseTrackerModal"; // Import the modal component
 
 const PostDetails = () => {
   const { id } = useParams(); // Get the post ID from the URL
@@ -15,7 +14,7 @@ const PostDetails = () => {
   const [group, setGroup] = useState(null); // Store the group information
   const [groupError, setGroupError] = useState(false); // Store group fetch error
   const [isChatOpen, setIsChatOpen] = useState(false); // Modal state for Group Chat
-  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [joinRequests, setJoinRequests] = useState([]);
   // Get the logged-in user from Redux store
   const { user } = useSelector((state) => state.user);
 
@@ -65,6 +64,7 @@ const PostDetails = () => {
             },
           }
         );
+        setJoinRequests(joinRequestsResponse.data.requests);
       } catch (error) {
         console.error("Error fetching post details:", error);
       } finally {
@@ -74,6 +74,7 @@ const PostDetails = () => {
 
     fetchPostDetails();
   }, [id]);
+  console.log(post);
   // Handle user removal
   const handleRemoveUser = async (userId) => {
     try {
@@ -210,23 +211,6 @@ const PostDetails = () => {
               </div>
             </div>
           )}
-          <div>
-            {/* Existing content */}
-            <button
-              className="bg-green-500 text-white p-2 rounded-lg mt-4"
-              onClick={() => setIsExpenseModalOpen(true)}
-            >
-              Open Expense Tracker
-            </button>
-
-            {isExpenseModalOpen && (
-              <ExpenseTrackerModal
-                tripId={post._id}
-                closeModal={() => setIsExpenseModalOpen(false)}
-                group={group}
-              />
-            )}
-          </div>
         </>
       )}
     </div>
