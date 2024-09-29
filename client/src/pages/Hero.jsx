@@ -14,6 +14,7 @@ import mouse from '../assets/mouse.gif'
 import bike from '../assets/bike.jpg'
 import kiss from '../assets/kiss.jpg'
 import Footer from '../components/Footer';
+import { Logout } from '../redux/userSlice';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -43,11 +44,10 @@ const Hero = () => {
 //     }
 //   }
 
-//   const handleLogout = ()=> {
-//     dispatch(setToken(null));
-//     dispatch(setUser(null));
-//     navigate('/login');
-//   }
+  const handleLogout = ()=> {
+    dispatch(Logout());
+    navigate('/');
+  }
 
  const AlertClick = ()=>{
     alert("alert working")
@@ -127,7 +127,7 @@ const Hero = () => {
         <footer className="h-[50vh] flex items-center justify-center">
             {
                 user == null && <div className='flex flex-row gap-3 items-center justify-center' >
-                    <Link to='/signup'>
+                    <Link to='/register'>
                         <button>
                             <span className='box'>Sign up</span>
                         </button>
@@ -137,6 +137,16 @@ const Hero = () => {
                             <span className='box'>Login</span>
                         </button>
                     </Link>
+                </div>
+            }
+            {
+                user  && <div className='flex flex-row gap-3 items-center justify-center' >
+                    
+                    
+                        <button onClick = {handleLogout}>
+                            <span className='box'>Logout</span>
+                        </button>
+                    
                 </div>
             }
         </footer>

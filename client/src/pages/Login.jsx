@@ -24,7 +24,8 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || `/${user._id}`;
+  // const from = location.state?.from?.pathname || '/';
+  
 
   const onSubmit = async (data) => {
     dispatch(setLoading(true));
@@ -42,7 +43,7 @@ const Login = () => {
       const { token, user } = response.data;
       dispatch(UserLogin(user, token));
 
-      navigate(from, { replace: true });
+      navigate(`/${user._id}`);
     } catch (error) {
       setErrMsg("Invalid email or password");
     } finally {
