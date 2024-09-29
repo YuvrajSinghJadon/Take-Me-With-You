@@ -15,6 +15,7 @@ import bike from '../assets/bike.jpg'
 import kiss from '../assets/kiss.jpg'
 import Footer from '../components/Footer';
 import { Logout } from '../redux/userSlice';
+import TripCard from '../components/TripCard';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -28,21 +29,28 @@ const Hero = () => {
   const loaderRef = useRef(null);
   const demoWrapperRef = useRef(null);
 
-//   const fetchAllTrips = async() => {
-//     try {
-//       const response = await axios.get('/api/v1/getAllTrips');
-//       if(response.status != 200 )
-//       {
-//         console.log("error fetching response ")
-//         return;
-//       }
-//       console.log("response : ", response.data.trips)
-//       setData(response.data.trips);
-//     } catch (error) {
-//       console.log("Some error occured fetching details of all data: ", error);
-//       // console.log("error: ", response?.error);
-//     }
-//   }
+  const fetchAllTrips = async() => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/posts`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if(response.status != 200 )
+      {
+        console.log("error fetching response ")
+        return;
+      }
+      console.log("response : ", response.data.data)
+      setData(response.data.data);
+    } catch (error) {
+      console.log("Some error occured fetching details of all data: ", error);
+      // console.log("error: ", response?.error);
+    }
+  }
 
   const handleLogout = ()=> {
     dispatch(Logout());
@@ -54,7 +62,7 @@ const Hero = () => {
  }
 
   useEffect(() => {
-    // fetchAllTrips();
+    fetchAllTrips();
     const images = gsap.utils.toArray('img');
     const loader = loaderRef.current;
     const updateProgress = (instance) => {
@@ -246,31 +254,23 @@ const Hero = () => {
             </div> */}
 <h2 className='text-6xl text-left  font-playfair bg-black text-offWhite  p-10' >Cards section</h2>
 
-{/* <div class="overflow-x-hidden relative w-[90%] mb-11 mt-11   h-auto mx-auto cards">
+<div class="overflow-x-hidden relative w-[90%] mb-11 mt-11   h-auto mx-auto cards">
 <div class="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-offWhite to-transparent z-10"></div>
  
   <div class="flex items-center justify-start space-x-6  h-auto w-full animate-scroll">
     {data.concat(data).map((trip, index) => (
       <div key={trip._id || index} class="flex-shrink-0   ">
         <TripCard
-          title={trip.title}
-          source={trip.source}
-          destination={trip.destination}
-          dates={trip.dates}
-          itinerary={trip.itinerary}
-          budget={trip.budget}
-          participants={trip.participants}
-          createdAt={trip.createdAt}
-          creator={trip.creator?.firstName}
-          creatorId={trip.creator?._id}
-          creatorEmail={trip.creator?.email}
-          tripId={trip._id}
+          name={trip.userId?.firstName}
+          description={trip.description}
+          image ={trip.imageUrl}
+          
         />
       </div>
     ))}
   </div>
     <div class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-offWhite to-transparent z-10"></div>
-</div> */}
+</div>
 
     <Footer/>
 
