@@ -5,10 +5,24 @@ import Message from "./models/messageModel.js";
 export const initializeSocket = (server) => {
   const io = new socketIO(server, {
     cors: {
-      origin:
-        "https://take-me-with-ab1weo33i-yuvrajsinghjadons-projects.vercel.app", // Vercel frontend URL
+      origin: function (origin, callback) {
+        // Allow requests from Vercel subdomains or certain allowed origins
+        const allowedOrigins = [
+          "https://take-me-with-ab1weo33i-yuvrajsinghjadons-projects.vercel.app",
+          "https://take-me-with-c4678vcl0-yuvrajsinghjadons-projects.vercel.app",
+        ];
+        if (
+          !origin ||
+          allowedOrigins.includes(origin) ||
+          origin.endsWith("vercel.app")
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
       methods: ["GET", "POST"],
-      credentials: true, // Allow cookies and authentication
+      credentials: true,
     },
   });
 
