@@ -8,6 +8,7 @@ import {
   ResetPassword,
   PostDetails,
 } from "./pages"; // Import the page components
+import Hero from "./pages/Hero";
 
 // Layout Component that checks for user authentication
 function Layout() {
@@ -29,9 +30,10 @@ function App() {
   return (
     <div data-theme={theme} className="w-full min-h-[100vh]">
       <Routes>
+          <Route path="/" element={<Hero />} /> {/* Hero page */}
         {/* Protected Routes: Only accessible when authenticated */}
         <Route element={<Layout />}>
-          <Route path="/" element={<Home />} /> {/* Home page */}
+          <Route path="/:id" element={<Home />} /> {/* Home page */}
           <Route path="/profile/:id?" element={<Profile />} />{" "}
           {/* Profile page */}
           <Route path="/posts/:id" element={<PostDetails />} />
