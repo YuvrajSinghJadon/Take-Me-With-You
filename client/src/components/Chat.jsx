@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:8800"); // Connect to your backend
+const socket = io(import.meta.env.VITE_API_URL || 'https://your-backend-service.onrender.com');
+ // Connect to your backend
 
 const Chat = () => {
   const [message, setMessage] = useState("");

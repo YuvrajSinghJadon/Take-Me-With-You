@@ -4,7 +4,9 @@ import { useSelector } from "react-redux";
 import moment from "moment";
 import { FaPaperclip, FaSmile, FaEdit, FaTrashAlt } from "react-icons/fa";
 
-const socket = io("http://localhost:8800");
+const socket = io(
+  import.meta.env.VITE_API_URL || "https://your-backend-service.onrender.com"
+);
 
 const GroupChat = ({ roomId }) => {
   const [message, setMessage] = useState("");
