@@ -26,11 +26,32 @@ const PORT = process.env.PORT || 8800;
 dbConnection();
 
 app.use(helmet());
-app.use(cors({
-  origin: 'https://take-me-with-ab1weo33i-yuvrajsinghjadons-projects.vercel.app', // Vercel frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true  // Allows cookies, authentication, etc.
-}));
+
+// Define a list of allowed origins
+const allowedOrigins = [
+  "https://take-me-with-ab1weo33i-yuvrajsinghjadons-projects.vercel.app",
+  "https://take-me-with-c4678vcl0-yuvrajsinghjadons-projects.vercel.app", // Add other Vercel deployment URLs as needed
+];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+
+      if (
+        allowedOrigins.indexOf(origin) !== -1 ||
+        origin.endsWith("vercel.app")
+      ) {
+        // Allow all Vercel subdomains or explicitly allowed origins
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    }, // Vercel frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true, // Allows cookies, authentication, etc.
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json({ limit: "10mb" }));
