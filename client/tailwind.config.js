@@ -15,6 +15,22 @@ export default {
         body: ["Roboto", "Helvetica", "sans-serif"],
       },
     },
+    screens: {
+      'sm': '320px',
+      
+
+      'md': '425px',
+      
+
+      'lg': '768px',
+      
+
+      'xl': '1024px',
+      
+
+      '2xl': '1440px',
+      
+    }
   },
   plugins: [],
 };

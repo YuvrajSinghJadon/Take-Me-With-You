@@ -25,7 +25,7 @@ const router = express.Router();
 router.post("/create-post", userAuth, upload.single("image"), createPost);
 
 // Fetch all posts (homepage) - Authenticated route
-router.get("/", userAuth, getPosts); // Protect this route with userAuth
+router.get("/", getPosts); // Protect this route with userAuth
 
 // Fetch a single post by ID - Authenticated route
 router.get("/:id", userAuth, getPost); // Protect this route with userAuth
