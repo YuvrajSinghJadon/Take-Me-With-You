@@ -5,7 +5,10 @@ import Message from "./models/messageModel.js";
 export const initializeSocket = (server) => {
   const io = new socketIO(server, {
     cors: {
-      origin: "*",
+      origin:
+        "https://take-me-with-ab1weo33i-yuvrajsinghjadons-projects.vercel.app", // Vercel frontend URL
+      methods: ["GET", "POST"],
+      credentials: true, // Allow cookies and authentication
     },
   });
 
