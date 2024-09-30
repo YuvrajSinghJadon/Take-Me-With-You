@@ -5,7 +5,9 @@ import moment from "moment";
 import { FaPaperclip, FaSmile, FaEdit, FaTrashAlt } from "react-icons/fa";
 
 const socket = io(
-  import.meta.env.VITE_API_URL || "https://take-me-with-you.onrender.com"
+  import.meta.env.MODE === "development"
+    ? "http://localhost:8800"
+    : "https://take-me-with-you.onrender.com"
 );
 
 const GroupChat = ({ roomId }) => {
