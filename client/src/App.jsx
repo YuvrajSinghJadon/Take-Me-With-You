@@ -7,6 +7,7 @@ import {
   Register,
   ResetPassword,
   PostDetails,
+  VerificationSuccess
 } from "./pages"; // Import the page components
 import Hero from "./pages/Hero";
 
@@ -30,7 +31,8 @@ function App() {
   return (
     <div data-theme={theme} className="w-full min-h-[100vh]">
       <Routes>
-          <Route path="/" element={<Hero />} /> {/* Hero page */}
+        <Route path="/" element={<Hero />} /> {/* Hero page */}
+        <Route path="/verification-success" component={VerificationSuccess} />
         {/* Protected Routes: Only accessible when authenticated */}
         <Route element={<Layout />}>
           <Route path="/:id" element={<Home />} /> {/* Home page */}
