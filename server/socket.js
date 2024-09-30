@@ -8,6 +8,8 @@ export const initializeSocket = (server) => {
       origin: function (origin, callback) {
         // Allow requests from Vercel subdomains or certain allowed origins
         const allowedOrigins = [
+          "http://localhost:5173", // Localhost origin for Vite during development
+          "http://127.0.0.1:5173", // Localhost alternative IP
           "https://take-me-with-ab1weo33i-yuvrajsinghjadons-projects.vercel.app",
           "https://take-me-with-c4678vcl0-yuvrajsinghjadons-projects.vercel.app",
         ];

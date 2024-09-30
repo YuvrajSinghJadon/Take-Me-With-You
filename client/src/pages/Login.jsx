@@ -25,7 +25,6 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   // const from = location.state?.from?.pathname || '/';
-  
 
   const onSubmit = async (data) => {
     dispatch(setLoading(true));
@@ -39,7 +38,7 @@ const Login = () => {
           password: data.password,
         }
       );
-      console.log("response.data: ", response.data)
+      console.log("response.data: ", response.data);
       const { token, user } = response.data;
       dispatch(UserLogin(user, token));
 

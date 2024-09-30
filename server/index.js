@@ -29,6 +29,8 @@ app.use(helmet());
 
 // Define a list of allowed origins
 const allowedOrigins = [
+  "http://127.0.0.1:5173", // Vite frontend
+  "http://localhost:5173", // Alternative localhost frontend
   "https://take-me-with-ab1weo33i-yuvrajsinghjadons-projects.vercel.app",
   "https://take-me-with-c4678vcl0-yuvrajsinghjadons-projects.vercel.app", // Add other Vercel deployment URLs as needed
 ];
