@@ -243,35 +243,39 @@ export const friendRequest = async (req, res, next) => {
     });
   }
 };
-
-export const getFriendRequest = async (req, res) => {
+// Controller to get all groups for a user
+export const getUserGroups = async (req, res) => {
+  console.log("Fetching groups for user:", req.user.userId); // Debug log
   try {
-    const { userId } = req.body.user;
+    // Get the user's ID from the authenticated request
+    const userId = req.user.userId;
 
-    const request = await FriendRequest.find({
-      requestTo: userId,
-      requestStatus: "Pending",
-    })
-      .populate({
-        path: "requestFrom",
-        select: "firstName lastName profileUrl profession -password",
-      })
-      .limit(10)
-      .sort({
-        _id: -1,
-      });
+    const user = await Users.findById(userId).populate({
+      path: "groups",
+      populate: [
+        { path: "postId", select: "postName" }, // Populating postId with postName
+        { path: "owner", select: "firstName lastName" }, // Populating owner with first and last name
+        { path: "users", select: "firstName lastName" }, // Populating users array with first and last name
+      ],
+    });
 
+    // Check if user is not found
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    // Return the populated groups for the user
     res.status(200).json({
       success: true,
-      data: request,
+      data: user.groups, // Here we directly access `user.groups`
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "auth error",
-      success: false,
-      error: error.message,
-    });
+    console.error("Error fetching user groups:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error. Please try again." });
   }
 };
 

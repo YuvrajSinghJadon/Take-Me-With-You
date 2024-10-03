@@ -4,13 +4,13 @@ import {
   acceptRequest,
   changePassword,
   friendRequest,
-  getFriendRequest,
   getUserById,
   profileViews,
   requestPasswordReset,
   resetPassword,
   suggestedFriends,
   updateUser,
+  getUserGroups,
 } from "../controllers/userController.js";
 import userAuth from "../middleware/authMiddleware.js";
 import { upload } from "../middleware/multerMiddleware.js";
@@ -34,7 +34,9 @@ router.put(
 
 // Friend requests
 router.post("/friend-request", userAuth, friendRequest);
-router.post("/get-friend-request", userAuth, getFriendRequest);
+
+// Route to get all groups the user is part of
+router.get("/user-groups", userAuth, getUserGroups);
 
 // Accept/deny friend requests
 router.post("/accept-request", userAuth, acceptRequest);
@@ -53,6 +55,5 @@ router.get("/verified", (req, res) => {
 router.get("/resetpassword", (req, res) => {
   res.sendFile(path.join(__dirname, "./views/build", "index.html"));
 });
-
 
 export default router;

@@ -91,7 +91,7 @@ export const initializeSocket = (server) => {
       try {
         await Message.findByIdAndDelete(messageId);
 
-        // Remove the message from the group's messages array
+        // Remove the message from the group's messages array 
         await Group.findByIdAndUpdate(groupId, {
           $pull: { messages: messageId },
         });

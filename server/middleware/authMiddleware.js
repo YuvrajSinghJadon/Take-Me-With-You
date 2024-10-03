@@ -2,7 +2,6 @@
 import JWT from "jsonwebtoken";
 
 const userAuth = async (req, res, next) => {
-  console.log("adf");
   const authHeader = req?.headers?.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -18,10 +17,7 @@ const userAuth = async (req, res, next) => {
   try {
     console.log("Verifying token...");
     const userToken = JWT.verify(token, process.env.JWT_SECRET_KEY); // Verify the token
-
-    req.user = {
-      userId: userToken.userId, // Attach user info to req (not req.body)
-    };
+    req.user = { userId: userToken.userId }; // Attach user info to req
 
     console.log("Token verified, proceeding to next middleware...");
     next(); // Move to the next middleware/controller
