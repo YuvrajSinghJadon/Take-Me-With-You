@@ -4,7 +4,11 @@ import { useSelector } from "react-redux";
 import moment from "moment";
 import { FaPaperclip, FaSmile, FaEdit, FaTrashAlt } from "react-icons/fa";
 
-const socket = io("http://localhost:8800");
+const socket = io(
+  import.meta.env.MODE === "development"
+    ? "http://localhost:8800"
+    : "https://take-me-with-you.onrender.com"
+);
 
 const GroupChat = ({ roomId }) => {
   const [message, setMessage] = useState("");

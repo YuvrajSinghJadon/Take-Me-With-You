@@ -26,7 +26,34 @@ const PORT = process.env.PORT || 8800;
 dbConnection();
 
 app.use(helmet());
-app.use(cors());
+
+// Define a list of allowed origins
+const allowedOrigins = [
+  "http://127.0.0.1:5173", // Vite frontend
+  "http://localhost:5173", // Alternative localhost frontend
+  "https://take-me-with-ab1weo33i-yuvrajsinghjadons-projects.vercel.app",
+  "https://take-me-with-c4678vcl0-yuvrajsinghjadons-projects.vercel.app", // Add other Vercel deployment URLs as needed
+];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+
+      if (
+        allowedOrigins.indexOf(origin) !== -1 ||
+        origin.endsWith("vercel.app")
+      ) {
+        // Allow all Vercel subdomains or explicitly allowed origins
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    }, // Vercel frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true, // Allows cookies, authentication, etc.
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json({ limit: "10mb" }));
