@@ -79,8 +79,13 @@ export const getPosts = async (req, res) => {
       data: posts,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Server error. Please try again." });
+    console.error("Error creating post:", error.stack); // Log the full error stack
+    res
+      .status(500)
+      .json({
+        message: "Server error. Please try again.",
+        error: error.message,
+      }); // Send back error message for easier debugging
   }
 };
 
