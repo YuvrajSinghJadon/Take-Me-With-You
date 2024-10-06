@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
 
 export const register = async (req, res, next) => {
+  console.log("Request Body:", req.body); // Add this log
   const { firstName, lastName, email, password, whatsappNumber } = req.body;
 
   // Validate required fields
