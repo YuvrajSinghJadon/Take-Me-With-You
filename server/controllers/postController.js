@@ -47,10 +47,13 @@ export const createPost = async (req, res) => {
       destinations: JSON.parse(destinations), // Parse the destinations array
       imageUrl, // Store the Cloudinary image URL if available
     });
+    // Populate user data before emitting
+    const populatedPost = await Posts.findById(post._id).populate(
+      "userId",
+      "firstName lastName avatar"
+    );
 
-    // Call the emitPostCreated function to emit the real-time update
-    console.log("New post created, emitting postCreated event:", post); // Add this log
-    emitPostCreated(post);
+    emitPostCreated(populatedPost);
 
     res.status(201).json({
       success: true,
