@@ -2,6 +2,8 @@ import { Server as socketIO } from "socket.io"; // Using ES6 imports for Socket.
 import Group from "./models/Groups.js";
 import Message from "./models/messageModel.js";
 
+let ioInstance = null;
+
 export const initializeSocket = (server) => {
   const io = new socketIO(server, {
     cors: {
