@@ -49,6 +49,7 @@ export const createPost = async (req, res) => {
     });
 
     // Call the emitPostCreated function to emit the real-time update
+    console.log("New post created, emitting postCreated event:", post); // Add this log
     emitPostCreated(post);
 
     res.status(201).json({

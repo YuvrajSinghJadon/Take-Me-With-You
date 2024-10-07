@@ -49,19 +49,22 @@ const Home = () => {
       setLoading(false);
     }
   };
-  // Set up WebSocket connection and listen for new posts
   useEffect(() => {
-    socket.current = io(import.meta.env.VITE_API_URL); // Connect to the backend Socket.IO server
 
-    // Listen for 'postCreated' event and update the post feed
+    socket.current = io(import.meta.env.VITE_API_URL);
+
     socket.current.on("postCreated", (newPost) => {
-      setPosts((prevPosts) => [newPost, ...prevPosts]); // Add the new post to the top of the feed
+      console.log("New post received via socket:", newPost);
+      setPosts((prevPosts) => [newPost, ...prevPosts]);
     });
-
+    socket.current.on("disconnect", () => {
+      console.log("Socket.IO connection disconnected");
+    });
     return () => {
-      socket.current.disconnect(); // Cleanup the socket connection on component unmount
+      socket.current.disconnect();
     };
   }, []);
+
   useEffect(() => {
     fetchPosts();
   }, []);

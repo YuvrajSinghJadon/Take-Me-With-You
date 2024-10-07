@@ -2,10 +2,10 @@ import { Server as socketIO } from "socket.io"; // Using ES6 imports for Socket.
 import Group from "./models/Groups.js";
 import Message from "./models/messageModel.js";
 
-let ioInstance = null;
+let io = null;
 
 export const initializeSocket = (server) => {
-  const io = new socketIO(server, {
+  io = new socketIO(server, {
     cors: {
       origin: function (origin, callback) {
         // Allow requests from Vercel subdomains or certain allowed origins
@@ -32,7 +32,6 @@ export const initializeSocket = (server) => {
 
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
-
     //  Create Group
     socket.on("createGroup", async (groupData) => {
       try {
@@ -191,7 +190,9 @@ export const initializeSocket = (server) => {
 };
 // Helper function to emit post creation event
 export const emitPostCreated = (post) => {
-  if (ioInstance) {
-    ioInstance.emit("postCreated", post); // Emit the 'postCreated' event to all connected clients
+  if (io) {
+    io.emit("postCreated", post); // Emit the event to all connected clients
+  } else {
+    console.log("Socket.IO instance not found!"); // Handle case where ioInstance is not set
   }
 };
