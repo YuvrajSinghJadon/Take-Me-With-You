@@ -80,12 +80,10 @@ export const getPosts = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating post:", error.stack); // Log the full error stack
-    res
-      .status(500)
-      .json({
-        message: "Server error. Please try again.",
-        error: error.message,
-      }); // Send back error message for easier debugging
+    res.status(500).json({
+      message: "Server error. Please try again.",
+      error: error.message,
+    }); // Send back error message for easier debugging
   }
 };
 
@@ -497,6 +495,12 @@ export const acceptJoinRequest = async (req, res) => {
         group.users.push(joinRequest.userId.toString());
         await group.save();
       }
+      // FIX: Update the accepted user's groups array if the group already exists
+      await Users.findByIdAndUpdate(
+        joinRequest.userId,
+        { $push: { groups: group._id } }, // Push the group ID into the user's groups array
+        { new: true, upsert: true }
+      );
     }
 
     // Add the user to the trip members of the post (if not already added)

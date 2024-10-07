@@ -30,6 +30,22 @@ export const initializeSocket = (server) => {
 
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
+
+    //  Create Group
+    socket.on("createGroup", async (groupData) => {
+      try {
+        // Create the group in the database
+        const newGroup = await Group.create(groupData);
+
+        // Broadcast the new group to all connected users
+        io.emit("groupCreated", newGroup); // This emits the new group to everyone
+        console.log(`New group created: ${newGroup._id}`);
+      } catch (error) {
+        console.error("Error creating group:", error);
+        socket.emit("error", "Failed to create group.");
+      }
+    });
+
     // User joins a group chat room
     socket.on("joinRoom", async ({ roomId, userId }) => {
       console.log(`User joining room: ${roomId}, with userId: ${userId}`); // Debug log
@@ -110,7 +126,7 @@ export const initializeSocket = (server) => {
       try {
         await Message.findByIdAndDelete(messageId);
 
-        // Remove the message from the group's messages array 
+        // Remove the message from the group's messages array
         await Group.findByIdAndUpdate(groupId, {
           $pull: { messages: messageId },
         });
