@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import {
@@ -16,6 +16,7 @@ import {
 import { Link } from "react-router-dom";
 import Notification from "../components/Notification";
 import { HiMenuAlt3 } from "react-icons/hi";
+import { io } from "socket.io-client";
 
 const Home = () => {
   const { user, edit } = useSelector((state) => state.user);
@@ -25,6 +26,8 @@ const Home = () => {
   const [joinStatus, setJoinStatus] = useState("");
   const [showStatus, setShowStatus] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+
+  const socket = useRef(null); // Create socket reference for WebSocket connection
 
   // Fetch all posts
   const fetchPosts = async () => {
@@ -46,7 +49,19 @@ const Home = () => {
       setLoading(false);
     }
   };
+  // Set up WebSocket connection and listen for new posts
+  useEffect(() => {
+    socket.current = io(import.meta.env.VITE_API_URL); // Connect to the backend Socket.IO server
 
+    // Listen for 'postCreated' event and update the post feed
+    socket.current.on("postCreated", (newPost) => {
+      setPosts((prevPosts) => [newPost, ...prevPosts]); // Add the new post to the top of the feed
+    });
+
+    return () => {
+      socket.current.disconnect(); // Cleanup the socket connection on component unmount
+    };
+  }, []);
   useEffect(() => {
     fetchPosts();
   }, []);

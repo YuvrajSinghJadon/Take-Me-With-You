@@ -187,3 +187,9 @@ export const initializeSocket = (server) => {
     });
   });
 };
+// Helper function to emit post creation event
+export const emitPostCreated = (post) => {
+  if (ioInstance) {
+    ioInstance.emit("postCreated", post); // Emit the 'postCreated' event to all connected clients
+  }
+};

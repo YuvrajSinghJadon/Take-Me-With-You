@@ -5,6 +5,7 @@ import Posts from "../models/PostModel.js";
 import JoinRequests from "../models/joinRequests.js";
 import { uploadOnCloudinary } from "../utils/uploadFiles.js";
 import sendWhatsAppMessage from "../utils/smsService.js";
+import { emitPostCreated } from "../socket.js";
 // Create a Posts
 export const createPost = async (req, res) => {
   try {
@@ -46,6 +47,9 @@ export const createPost = async (req, res) => {
       destinations: JSON.parse(destinations), // Parse the destinations array
       imageUrl, // Store the Cloudinary image URL if available
     });
+
+    // Call the emitPostCreated function to emit the real-time update
+    emitPostCreated(post);
 
     res.status(201).json({
       success: true,
