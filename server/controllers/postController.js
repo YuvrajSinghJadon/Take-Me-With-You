@@ -69,7 +69,8 @@ export const createPost = async (req, res) => {
 // Get Posts for Homepage
 export const getPosts = async (req, res) => {
   try {
-    const { search } = req.body; // No need for userId
+    const { search, page = 1, limit = 10 } = req.query; // Default page is 1, limit is 10 posts per page
+    const skip = (page - 1) * limit;
 
     // If there's a search query, filter posts based on the description
     const posts = await Posts.find(
@@ -79,12 +80,18 @@ export const getPosts = async (req, res) => {
         path: "userId",
         select: "firstName lastName location profileUrl -password",
       })
-      .sort({ _id: -1 }); // Sort posts in descending order (most recent first)
+      .sort({ _id: -1 }) // Sort posts in descending order (most recent first)
+      .skip(skip) // Skip the previous pages' posts
+      .limit(Number(limit)); // Limit the number of posts fetched
+    const totalPosts = await Posts.countDocuments(
+      search ? { description: { $regex: search, $options: "i" } } : {}
+    );
 
     res.status(200).json({
       success: true,
       message: "Posts fetched successfully",
       data: posts,
+      totalPosts, // Include total post count for the client to calculate if more data exists
     });
   } catch (error) {
     console.error("Error creating post:", error.stack); // Log the full error stack

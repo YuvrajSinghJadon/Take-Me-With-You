@@ -27,21 +27,42 @@ const Home = () => {
   const [showStatus, setShowStatus] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Track the initial load
+
+  const observer = useRef();
+
   const socket = useRef(null); // Create socket reference for WebSocket connection
 
   // Fetch all posts
-  const fetchPosts = async () => {
+  const fetchPosts = async (initialLoad = false) => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/posts`,
+        `${import.meta.env.VITE_API_URL}/posts?page=${page}&limit=10`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
-      setPosts(response.data.data);
+      setPosts((prevPosts) => {
+        const existingIds = new Set(prevPosts.map((post) => post._id));
+        const newUniquePosts = response.data.data.filter(
+          (post) => !existingIds.has(post._id)
+        );
+        return [...prevPosts, ...newUniquePosts];
+      });
+      setHasMore(
+        response.data.data.length > 0 && posts.length < response.data.totalPosts
+      ); // Check if there are more posts
+      setLoading(false);
+
+      // If it's an initial load, make sure to set the flag to false
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
     } catch (error) {
       console.error("Error fetching posts:", error);
       setErrMsg("Failed to load posts. Please try again.");
@@ -50,24 +71,52 @@ const Home = () => {
     }
   };
   useEffect(() => {
-
     socket.current = io(import.meta.env.VITE_API_URL);
 
-    socket.current.on("postCreated", (newPost) => {
-      console.log("New post received via socket:", newPost);
-      setPosts((prevPosts) => [newPost, ...prevPosts]);
-    });
+    const handleNewPost = (newPost) => {
+      setPosts((prevPosts) => {
+        if (!prevPosts.some((post) => post._id === newPost._id)) {
+          return [newPost, ...prevPosts]; // Add new post to the top if it's not already in the list
+        }
+        return prevPosts;
+      });
+    };
+
+    socket.current.on("postCreated", handleNewPost);
+
     socket.current.on("disconnect", () => {
       console.log("Socket.IO connection disconnected");
     });
+
     return () => {
+      socket.current.off("postCreated", handleNewPost); // Clean up listener when component unmounts
       socket.current.disconnect();
     };
   }, []);
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    // Fetch the first set of posts only once when the component mounts
+    if (isInitialLoad) {
+      fetchPosts(true); // Pass true to flag the initial load
+    } else {
+      fetchPosts();
+    }
+  }, [page]); // Only fetch posts when `page` changes
+
+  // Function to trigger loading more posts when scroll reaches the bottom
+  const lastPostRef = (node) => {
+    if (loading) return;
+
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage((prevPage) => prevPage + 1); // Increment the page to fetch more posts
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  };
 
   // JoinTrip functionality
   const joinTrip = async (postId) => {
@@ -163,15 +212,30 @@ const Home = () => {
               {loading ? (
                 <Loading />
               ) : posts?.length > 0 ? (
-                posts.map((post) => (
-                  <PostCard
-                    key={post?._id}
-                    post={post}
-                    user={user}
-                    deletePost={() => {}}
-                    joinTrip={joinTrip}
-                  />
-                ))
+                posts.map((post, index) => {
+                  if (index === posts.length - 1) {
+                    return (
+                      <div ref={lastPostRef} key={post._id}>
+                        <PostCard
+                          post={post}
+                          user={user}
+                          deletePost={() => {}}
+                          joinTrip={joinTrip}
+                        />
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <PostCard
+                        key={post._id}
+                        post={post}
+                        user={user}
+                        deletePost={() => {}}
+                        joinTrip={joinTrip}
+                      />
+                    );
+                  }
+                })
               ) : (
                 <div className="flex w-full h-full items-center justify-center">
                   <p className="text-lg text-ascent-2">No Post Available</p>
