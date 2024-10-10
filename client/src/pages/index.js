@@ -4,6 +4,7 @@ import Register from "./Register";
 import Profile from "./Profile";
 import ResetPassword from "./ResetPassword";
 import PostDetails from "./PostDetails";
+import SetNewPassword from "./SetNewPassword";
 import VerificationSuccess from "./VerificationSuccess";
 export {
   Login,
@@ -13,4 +14,5 @@ export {
   ResetPassword,
   PostDetails,
   VerificationSuccess,
+  SetNewPassword,
 };

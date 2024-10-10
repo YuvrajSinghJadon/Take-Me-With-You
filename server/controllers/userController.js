@@ -62,8 +62,10 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Invalid reset token." });
     }
 
-    // If valid, allow the user to proceed with password reset
-    res.status(200).json({ success: true, message: "Valid token", userId });
+    // If the token is valid, redirect to the SetNewPassword page
+    return res.redirect(
+      `${process.env.APP_FRONTEND_URL}/reset-password/${userId}/${token}`
+    );
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error. Please try again." });

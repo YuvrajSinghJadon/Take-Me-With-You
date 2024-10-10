@@ -8,6 +8,7 @@ import {
   ResetPassword,
   PostDetails,
   VerificationSuccess,
+  SetNewPassword,
 } from "./pages"; // Import the page components
 import Hero from "./pages/Hero";
 
@@ -33,6 +34,10 @@ function App() {
       <Routes>
         <Route path="/" element={<Hero />} /> {/* Hero page */}
         <Route path="/verification-success" element={<VerificationSuccess />} />
+        <Route
+          path="/reset-password/:userId/:token"
+          element={<SetNewPassword />}
+        />
         {/* Protected Routes: Only accessible when authenticated */}
         <Route element={<Layout />}>
           <Route path="/:id" element={<Home />} /> {/* Home page */}

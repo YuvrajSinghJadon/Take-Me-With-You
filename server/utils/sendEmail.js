@@ -47,7 +47,7 @@ export const sendVerificationEmail = async (
 export const resetPasswordLink = async (user, res) => {
   const { _id, email } = user;
   const token = _id + uuidv4();
-  const link = `${APP_URL}users/reset-password/${_id}/${token}`;
+  const link = `${process.env.APP_FRONTEND_URL}/reset-password/${_id}/${token}`;
 
   const mailOptions = {
     from: AUTH_EMAIL,
