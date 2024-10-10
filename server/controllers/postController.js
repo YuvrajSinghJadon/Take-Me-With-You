@@ -10,6 +10,7 @@ import sendPushNotification from "../utils/sendPushNotification.js";
 // Create a Posts
 export const createPost = async (req, res) => {
   try {
+    console.log("create post api hit")
     const { userId } = req.user; // Get the authenticated userId from the req object
     const { description, startDate, estimatedDays, destinations } = req.body;
 
@@ -27,6 +28,7 @@ export const createPost = async (req, res) => {
       const uploadResult = await uploadOnCloudinary(req.file.path);
       if (uploadResult) {
         imageUrl = uploadResult.url; // Store the uploaded image URL
+        console.log("url image: ", imageUrl)
       }
     }
     //They below code is to check if multer is working fine.
