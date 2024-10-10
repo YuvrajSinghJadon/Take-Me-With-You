@@ -6,6 +6,7 @@ import JoinRequests from "../models/joinRequests.js";
 import { uploadOnCloudinary } from "../utils/uploadFiles.js";
 import sendWhatsAppMessage from "../utils/smsService.js";
 import { emitPostCreated } from "../socket.js";
+import sendPushNotification from "../utils/sendPushNotification.js";
 // Create a Posts
 export const createPost = async (req, res) => {
   try {
@@ -406,7 +407,10 @@ export const createJoinRequest = async (req, res) => {
     const { id } = req.params; // Post ID
 
     // Fetch the post by its ID
-    const post = await Posts.findById(id);
+    const post = await Posts.findById(id).populate(
+      "userId",
+      "expoPushToken firstName"
+    );
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
@@ -445,6 +449,16 @@ export const createJoinRequest = async (req, res) => {
     // Push the newly created join request into the post's joinRequests array
     post.joinRequests.push(joinRequest._id);
     await post.save(); // Save the updated post with the join request
+
+    // Fetch the post owner's push token and send a notification
+    const postOwner = post.userId; // Assuming userId refers to the post owner
+    if (postOwner && postOwner.expoPushToken) {
+      await sendPushNotification(
+        postOwner.expoPushToken,
+        "New Join Request",
+        `${user.firstName} has requested to join your trip!`
+      );
+    }
 
     return res.status(201).json({
       success: true,
@@ -527,7 +541,7 @@ export const acceptJoinRequest = async (req, res) => {
     // Update the status of the join request to "Approved" in the User's joinRequests array
     await Users.updateOne(
       { _id: joinRequest.userId, "joinRequests.postId": joinRequest.postId },
-      { $set: { "joinRequests.$.status": "Approved" } }
+      { $set: { "joinRequests.$.status": "Accepted" } }
     );
 
     // Remove the join request from the JoinRequests schema

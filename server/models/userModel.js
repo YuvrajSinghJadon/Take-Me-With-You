@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    expoPushToken: {
+      type: String,
+      default: null, // Stores the Expo Push Token for notifications
+    },
   },
   { timestamps: true }
 );

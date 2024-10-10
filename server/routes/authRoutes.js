@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Register and Login routes
 router.post("/register", register);
-router.get("/verify-email/:token", verifyEmail);
 router.post("/login", login);
+router.get("/verify-email/:token", verifyEmail);
 
 export default router;

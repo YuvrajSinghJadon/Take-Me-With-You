@@ -1,7 +1,7 @@
 import { Server as socketIO } from "socket.io"; // Using ES6 imports for Socket.IO
 import Group from "./models/Groups.js";
 import Message from "./models/messageModel.js";
-
+import sendPushNotification from "./utils/sendPushNotification.js";
 let io = null;
 
 export const initializeSocket = (server) => {
@@ -118,6 +118,26 @@ export const initializeSocket = (server) => {
 
         // Broadcast the message to everyone in the room
         io.to(groupId).emit("receiveMessage", populatedMessage);
+
+        // Send push notifications to users who are not connected to the group
+        for (let user of group.users) {
+          if (user._id.toString() !== senderId && user.expoPushToken) {
+            // Check if the user is connected to the socket room
+            const socketIds = await io.in(groupId).allSockets();
+            const isUserConnected = [...socketIds].some(
+              (socketId) => socketId === user._id.toString()
+            );
+
+            // If the user is not connected, send a push notification
+            if (!isUserConnected) {
+              await sendPushNotification(
+                user.expoPushToken,
+                `New message in group ${group.name}`,
+                `${populatedMessage.sender.firstName}: ${message}`
+              );
+            }
+          }
+        }
       } catch (error) {
         console.error("Error sending message:", error);
       }

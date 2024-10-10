@@ -7,7 +7,7 @@ const joinRequestSchema = new mongoose.Schema(
     userId: { type: Schema.Types.ObjectId, ref: "Users", required: true }, // User who is requesting to join the trip
     status: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"], // Status of the join request
+      enum: ["Pending", "Accepted", "Rejected"], // Status of the join request
       default: "Pending",
     },
     message: { type: String }, // Optional message from the user requesting to join
