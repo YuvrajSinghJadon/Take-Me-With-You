@@ -25,6 +25,7 @@ const CreatePost = ({ fetchPosts, user }) => {
 
   const handlePostSubmit = async (data) => {
     try {
+      
       dispatch(setLoading(true)); // Set global loading to true
       setErrMsg(""); // Clear any previous error messages
       const token = localStorage.getItem("token");
@@ -45,9 +46,10 @@ const CreatePost = ({ fetchPosts, user }) => {
       if (file) {
         formData.append("image", file); // Attach image to FormData
       }
-
+      
       // Send the POST request to the backend
       const response = await axios.post(
+        
         `${import.meta.env.VITE_API_URL}/posts/create-post`,
         formData,
         {
@@ -65,12 +67,17 @@ const CreatePost = ({ fetchPosts, user }) => {
         fetchPosts(); // Refresh the posts list after successful creation
         setShowModal(false); // Close modal after successful post creation
       } else {
-        setErrMsg("Failed to create post. Please try again.");
+        setErrMsg("Failed to create post. Please try again. inside else");
       }
     } catch (error) {
-      console.error("Failed to create post:", error);
-      setErrMsg("Failed to create post. Please try again.");
-    } finally {
+      if (error.response) {
+        setErrMsg(error.response.data.message || "Failed to create post. Please try again.");
+      } else if (error.request) {
+        setErrMsg("No response from server. Please try again.");
+      } else {
+        setErrMsg("Error in creating post. Please try again.");
+      }
+    }finally {
       dispatch(setLoading(false)); // Set global loading to false
     }
   };
@@ -196,6 +203,13 @@ const CreatePost = ({ fetchPosts, user }) => {
                       />
                     </div>
                   </div>
+                  {file && (
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt="Preview"
+                      style={{ width: '200px', marginTop: '10px' }}
+                    />
+                    )}
                 </form>
               )}
             </div>
