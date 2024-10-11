@@ -19,7 +19,6 @@ import ProtectedRoute from "./utils/ProtectedRoutes.jsx"; // Import ProtectedRou
 function Layout() {
   const { token } = useSelector((state) => state.user); // Only check for token in Layout
   const location = useLocation(); // For redirecting back to the page user was trying to access
-
   // Check if token exists and return the outlet or redirect to login
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;

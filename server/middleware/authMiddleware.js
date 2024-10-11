@@ -21,6 +21,7 @@ const userAuth = async (req, res, next) => {
     req.user = { userId: userToken.userId, userType: userToken.userType };
 
     console.log("Token verified, proceeding to next middleware...");
+    console.log("User details:", req.user); // Log the user details to debug
     next(); // Move to the next middleware/controller
   } catch (error) {
     console.log("JWT verification error:", error);
@@ -33,8 +34,17 @@ const userAuth = async (req, res, next) => {
 
 export const authorizeRoles = (allowedRoles) => {
   return (req, res, next) => {
-    // Ensure the user is authenticated and has the correct role
-    if (!allowedRoles.includes(req.user.userType)) {
+    // Convert both userType and allowedRoles to lowercase for consistency
+    const userRole = req.user.userType.toLowerCase();
+    console.log("User Type:", userRole); // Log the userType for debugging
+    console.log(
+      "Allowed Roles:",
+      allowedRoles.map((role) => role.toLowerCase())
+    ); // Log allowed roles
+
+    // Ensure the user has one of the allowed roles
+    if (!allowedRoles.map((role) => role.toLowerCase()).includes(userRole)) {
+      console.log("Authorization failed: Access denied.");
       return res.status(403).json({
         success: false,
         message: "Authorization failed: Access denied.",

@@ -11,6 +11,10 @@ const nativeSchema = new mongoose.Schema(
     city: { type: String },
     services: [
       {
+        _id: {
+          type: Schema.Types.ObjectId,
+          default: new mongoose.Types.ObjectId(),
+        }, // Explicit _id field for each service
         name: { type: String, required: true },
         description: { type: String },
         price: { type: Number, required: true },
@@ -25,12 +29,20 @@ const nativeSchema = new mongoose.Schema(
     languages: [{ type: String }],
     reviews: [
       {
+        _id: {
+          type: Schema.Types.ObjectId,
+          default: new mongoose.Types.ObjectId(),
+        }, // Explicit _id field for each review
         traveller: { type: Schema.Types.ObjectId, ref: "Users" },
         rating: { type: Number, required: true },
         comment: { type: String },
         createdAt: { type: Date, default: Date.now },
       },
     ],
+    earnings: {
+      totalEarnings: { type: Number, default: 0 }, // Track total earnings
+      upcomingPayments: { type: Number, default: 0 }, // Payments from confirmed but not completed bookings
+    },
   },
   { timestamps: true }
 );

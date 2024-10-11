@@ -32,7 +32,7 @@ router.post(
 );
 
 // Fetch all posts (homepage) - Authenticated route
-router.get("/",userAuth, getPosts); // Protect this route with userAuth
+router.get("/", userAuth, getPosts); // Protect this route with userAuth
 
 // Fetch a single post by ID - Authenticated route
 router.get("/:id", userAuth, getPost); // Protect this route with userAuth

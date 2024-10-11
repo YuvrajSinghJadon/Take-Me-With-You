@@ -76,7 +76,6 @@ export const register = async (req, res, next) => {
   }
 };
 
-
 // Login user
 export const login = async (req, res, next) => {
   const { email, password, expoPushToken, platform } = req.body;
@@ -121,7 +120,7 @@ export const login = async (req, res, next) => {
 
     user.password = undefined; // Remove password before sending response
 
-    const token = createJWT({userId: user._id, userType: user.userType});
+    const token = createJWT(user);
 
     res.status(200).json({
       success: true,

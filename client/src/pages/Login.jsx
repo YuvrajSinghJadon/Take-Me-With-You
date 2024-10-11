@@ -20,7 +20,6 @@ const Login = () => {
   });
 
   const { isLoading } = useSelector((state) => state.loader);
-  const { user } = useSelector((state) => state.user);
   const [errMsg, setErrMsg] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -45,39 +44,33 @@ const Login = () => {
       // Decode the token
       let decodedToken;
       try {
-        decodedToken = jwtDecode(token);
-        console.log("Decoded Token: ", decodedToken); // This will log the entire decoded token
+        decodedToken = jwtDecode(token); // Correctly decode the token
+        console.log("Decoded Token: ", decodedToken);
       } catch (decodeError) {
         console.error("Token decoding failed:", decodeError);
         setErrMsg("Failed to decode token");
         return;
       }
 
-      // Extract userType from decoded token
-      const { userId } = decodedToken;
-      
-      if (userId) {
-        const { userType } = userId;
-        console.log("Extracted userType:", userType); // Check if userType is extracted correctly
+      // Extract userType from the decoded token
+      const userType = decodedToken.userType; // Directly access userType from decoded token
+      console.log("Extracted userType:", userType);
 
-        if (!userType) {
-          setErrMsg("Invalid token: userType missing");
-          return;
-        }
+      if (!userType) {
+        setErrMsg("Invalid token: userType missing");
+        return;
+      }
 
-        dispatch(UserLogin(user, token));
-        const lowerCaseUserType = userType.toLowerCase(); // Convert to lowercase for consistency
+      dispatch(UserLogin(user, token));
+      const lowerCaseUserType = userType.toLowerCase(); // Convert to lowercase for consistency
 
-        // Role-based redirection
-        if (lowerCaseUserType === "traveller") {
-          navigate("/traveller-home");
-        } else if (lowerCaseUserType === "native") {
-          navigate("/native-home");
-        } else {
-          navigate("/pagenotfound"); // Fallback in case no userType is found
-        }
+      // Role-based redirection
+      if (lowerCaseUserType === "traveller") {
+        navigate("/traveller-home");
+      } else if (lowerCaseUserType === "native") {
+        navigate("/native-home");
       } else {
-        setErrMsg("userId not found in the token");
+        navigate("/pagenotfound"); // Fallback in case no userType is found
       }
     } catch (error) {
       setErrMsg("Invalid email or password");

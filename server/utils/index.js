@@ -15,9 +15,13 @@ export const compareString = async (password, userPassword) => {
   return isMatch;
 };
 
-// Create JWT token
-export function createJWT(id) {
-  return JWT.sign({ userId: id }, process.env.JWT_SECRET_KEY, {
-    expiresIn: "1d",
-  });
-}
+export const createJWT = (user) => {
+  return JWT.sign(
+    {
+      userId: user._id, // Use user._id here to get the correct user ID from MongoDB
+      userType: user.userType, // Attach userType directly
+    },
+    process.env.JWT_SECRET_KEY,
+    { expiresIn: "1d" }
+  );
+};

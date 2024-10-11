@@ -5,6 +5,7 @@ import userRoute from "./userRoutes.js";
 import postRoute from "./postRoutes.js";
 import searchRoutes from "./searchRoutes.js";
 import expanseRoutes from "./expanseRoutes.js";
+import nativeRoutes from "./nativeRoutes.js";
 
 const router = express.Router();
 
@@ -13,6 +14,9 @@ router.use(`/auth`, authRoute);
 
 // User routes
 router.use(`/users`, userRoute);
+
+// Native Routes
+router.use("/natives", nativeRoutes);
 
 // Post routes
 router.use(`/posts`, postRoute);
