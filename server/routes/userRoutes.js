@@ -11,11 +11,15 @@ import {
   suggestedFriends,
   updateUser,
   getUserGroups,
+  completeProfile,
 } from "../controllers/userController.js";
 import userAuth from "../middleware/authMiddleware.js";
 import { upload } from "../middleware/multerMiddleware.js";
 
 const router = express.Router();
+
+//complete profile
+router.post("/complete-profile", userAuth, completeProfile);
 
 // Password reset
 router.post("/request-passwordreset", requestPasswordReset);

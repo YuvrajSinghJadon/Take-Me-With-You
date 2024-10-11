@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Add useNavigate for redirection
+import { Link, useNavigate } from "react-router-dom"; 
 import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
 import { CustomButton, Loading, TextInput } from "../components";
-import RegisterBackground from "../assets/RegisterBackground.png"; // Background Image
-import Logo1 from "../assets/Logo1.png"; // Logo Image
-import axios from "axios"; // For API calls
+import RegisterBackground from "../assets/RegisterBackground.png";
+import Logo1 from "../assets/Logo1.png"; 
+import axios from "axios"; 
 
 const Register = () => {
   const {
@@ -20,7 +20,10 @@ const Register = () => {
   const [errMsg, setErrMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // To redirect after successful registration
+  const navigate = useNavigate();
+
+  // State to store user type (Traveller or Native)
+  const [userType, setUserType] = useState("Traveller");
 
   // Submit function to handle registration
   const onSubmit = async (data) => {
@@ -37,6 +40,7 @@ const Register = () => {
           email: data.email,
           password: data.password,
           whatsappNumber: data.whatsappNumber,
+          userType: userType, // Send user type
         }
       );
 
@@ -131,6 +135,7 @@ const Register = () => {
                 error={errors.lastName ? errors.lastName?.message : ""}
               />
             </div>
+
             {/* WhatsApp Number Field */}
             <TextInput
               name="whatsappNumber"
@@ -143,6 +148,7 @@ const Register = () => {
               })}
               error={errors.whatsappNumber ? errors.whatsappNumber.message : ""}
             />
+
             {/* Email Address */}
             <TextInput
               name="email"
@@ -190,6 +196,31 @@ const Register = () => {
                     : ""
                 }
               />
+            </div>
+
+            {/* Choose User Type */}
+            <div className="flex flex-col gap-2">
+              <label className="text-primary font-semibold">Register as:</label>
+              <div className="flex items-center gap-4">
+                <label>
+                  <input
+                    type="radio"
+                    value="Traveller"
+                    checked={userType === "Traveller"}
+                    onChange={() => setUserType("Traveller")}
+                  />
+                  Traveller
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    value="Native"
+                    checked={userType === "Native"}
+                    onChange={() => setUserType("Native")}
+                  />
+                  Native
+                </label>
+              </div>
             </div>
 
             {/* Error Message */}

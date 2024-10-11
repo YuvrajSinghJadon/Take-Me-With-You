@@ -44,6 +44,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null, // Stores the Expo Push Token for notifications
     },
+    ratings: {
+      averageRating: { type: Number, default: 0 },
+      numberOfRatings: { type: Number, default: 0 },
+    },
+    reviews: [
+      {
+        reviewer: { type: Schema.Types.ObjectId, ref: "Users" },
+        rating: { type: Number, required: true },
+        comment: { type: String },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

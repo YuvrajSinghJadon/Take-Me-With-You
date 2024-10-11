@@ -8,6 +8,7 @@ import Logo1 from "../assets/Logo1.png";
 import { UserLogin } from "../redux/userSlice";
 import { setLoading } from "../redux/loaderSlice";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const Login = () => {
   const {
@@ -40,9 +41,21 @@ const Login = () => {
       );
       console.log("response.data: ", response.data);
       const { token, user } = response.data;
+
+      // Decode the token to get userType
+      const decodedToken = jwtDecode(token);
+      const { userType } = decodedToken;
+
       dispatch(UserLogin(user, token));
 
-      navigate(`/${user._id}`);
+      // Role-based redirection
+      if (userType === "traveller") {
+        navigate("/traveller-home");
+      } else if (userType === "native") {
+        navigate("/native-home");
+      } else {
+        navigate("/pagenotfound"); // Fallback in case no userType is found
+      }
     } catch (error) {
       setErrMsg("Invalid email or password");
     } finally {

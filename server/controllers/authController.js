@@ -1,5 +1,6 @@
 import Users from "../models/userModel.js";
 import Verification from "../models/emailVerification.js";
+import Natives from "../models/nativeModel.js";
 import { compareString, createJWT, hashString } from "../utils/index.js";
 import { sendVerificationEmail } from "../utils/sendEmail.js";
 import { v4 as uuidv4 } from "uuid";
@@ -15,12 +16,15 @@ export const register = async (req, res, next) => {
     password,
     whatsappNumber,
     expoPushToken,
+    userType, // New field to capture Traveller or Native type
   } = req.body;
 
   // Validate required fields
   if (!firstName || !lastName || !email || !password || !whatsappNumber) {
     return res.status(400).json({ message: "Provide Required Fields!" });
   }
+  // Normalize email
+  const normalizedEmail = email.toLowerCase();
 
   try {
     // Check if the user already exists
@@ -40,20 +44,22 @@ export const register = async (req, res, next) => {
     await Verification.create({
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       whatsappNumber,
       expoPushToken,
       token: hashedToken, // Store the hashed token
-      joinRequests: [],
-      groups: [],
+      userType, // Store Traveller or Native type
       createdAt: Date.now(),
       expiresAt: Date.now() + 3600000, // 1 hour expiry for the token
     });
 
     // Send verification email
     try {
-      await sendVerificationEmail({ email, token, lastName }, res);
+      await sendVerificationEmail(
+        { email: normalizedEmail, token, lastName },
+        res
+      );
       return res.status(201).json({
         success: true,
         message: "Registration successful. Please verify your email.",
@@ -69,6 +75,8 @@ export const register = async (req, res, next) => {
     return res.status(500).json({ message: "Server error. Try again later." });
   }
 };
+
+
 // Login user
 export const login = async (req, res, next) => {
   const { email, password, expoPushToken, platform } = req.body;
@@ -76,13 +84,16 @@ export const login = async (req, res, next) => {
   if (!email || !password) {
     return res.status(400).json({ message: "Please provide user credentials" });
   }
+  const normalizedEmail = email.toLowerCase();
 
   try {
     // Find user by email
-    const user = await Users.findOne({ email }).select("+password").populate({
-      path: "friends",
-      select: "firstName lastName location profileUrl -password",
-    });
+    const user = await Users.findOne({ email: normalizedEmail })
+      .select("+password")
+      .populate({
+        path: "friends",
+        select: "firstName lastName location profileUrl -password",
+      });
 
     if (!user) {
       return next("Invalid email or password");
@@ -110,7 +121,7 @@ export const login = async (req, res, next) => {
 
     user.password = undefined; // Remove password before sending response
 
-    const token = createJWT(user._id);
+    const token = createJWT({userId: user._id, userType: user.userType});
 
     res.status(200).json({
       success: true,
@@ -127,10 +138,13 @@ export const login = async (req, res, next) => {
 // Verify email
 export const verifyEmail = async (req, res) => {
   const { token } = req.params; // Get the token from the URL
-
+  const { email } = req.query;
+  const normalizedEmail = email.toLowerCase();
   try {
     // Find the verification record
-    const verificationRecord = await Verification.findOne({});
+    const verificationRecord = await Verification.findOne({
+      email: normalizedEmail,
+    });
 
     if (!verificationRecord) {
       return res.status(400).json({ message: "Invalid or expired token." });
@@ -158,9 +172,8 @@ export const verifyEmail = async (req, res) => {
       email,
       password,
       whatsappNumber,
-      joinRequests,
-      groups,
       expoPushToken, // Ensure we are capturing the push token here
+      userType, // Store Traveller or Native type
     } = verificationRecord;
 
     const user = await Users.create({
@@ -171,10 +184,20 @@ export const verifyEmail = async (req, res) => {
       whatsappNumber,
       verified: true,
       expoPushToken, // Save the push token into the user's document
+      userType, // Store Traveller or Native type
       joinRequests: [], // Initialize as an empty array
       groups: [],
     });
-
+    // If the user registers as a Native, create a Native profile
+    if (userType === "Native") {
+      await Natives.create({
+        user: user._id, // Link to the newly created user
+        city: "", // The native will complete this later
+        bio: "", // The native will complete this later
+        languages: [], // The native will complete this later
+        services: [], // Empty, the native can add services later
+      });
+    }
     // Delete the verification record after user creation
     await Verification.findByIdAndDelete(verificationRecord._id);
 

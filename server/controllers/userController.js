@@ -1,10 +1,41 @@
-import cloudinary from "cloudinary";
 import { uploadOnCloudinary } from "../utils/uploadFiles.js"; // Assume we have this utility
 import Users from "../models/userModel.js";
 import { compareString, createJWT, hashString } from "../utils/index.js";
 import PasswordReset from "../models/PasswordReset.js";
 import { resetPasswordLink } from "../utils/sendEmail.js";
 import FriendRequest from "../models/friendRequest.js";
+import Natives from "../models/nativeModel.js";
+
+
+
+
+// Complete profile for Natives
+export const completeProfile = async (req, res) => {
+  const { userId } = req.user; // Assuming userId is available through authentication
+  const { city, bio, languages, services } = req.body;
+
+  try {
+    // Find the native profile
+    const nativeProfile = await Natives.findOne({ user: userId });
+
+    if (!nativeProfile) {
+      return res.status(404).json({ message: "Native profile not found." });
+    }
+
+    // Update the profile with new details
+    nativeProfile.city = city || nativeProfile.city;
+    nativeProfile.bio = bio || nativeProfile.bio;
+    nativeProfile.languages = languages || nativeProfile.languages;
+    nativeProfile.services = services || nativeProfile.services;
+
+    await nativeProfile.save();
+
+    return res.status(200).json({ message: "Profile updated successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error. Try again later." });
+  }
+};
 
 export const requestPasswordReset = async (req, res) => {
   try {

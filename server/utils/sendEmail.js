@@ -7,7 +7,7 @@ import PasswordReset from "../models/PasswordReset.js";
 
 dotenv.config();
 
-const { AUTH_EMAIL, AUTH_PASSWORD, APP_URL} = process.env;
+const { AUTH_EMAIL, AUTH_PASSWORD, APP_URL } = process.env;
 
 // Gmail SMTP configuration
 let transporter = nodemailer.createTransport({
@@ -18,12 +18,16 @@ let transporter = nodemailer.createTransport({
   },
 });
 
-// sendEmail.js
+//sendVerificationEmail.js
 export const sendVerificationEmail = async (
   { email, token, lastName },
   res
 ) => {
-  const link = `${APP_URL}auth/verify-email/${token}`;
+  // Encode the email to safely include it in the URL
+  const encodedEmail = encodeURIComponent(email);
+
+  // Update the link to include the email as a query parameter
+  const link = `${APP_URL}auth/verify-email/${token}?email=${encodedEmail}`;
 
   const mailOptions = {
     from: process.env.AUTH_EMAIL,

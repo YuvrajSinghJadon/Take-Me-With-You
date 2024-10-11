@@ -1,7 +1,7 @@
 import { Outlet, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
-  Home,
+  TravellerHome,
   Login,
   Profile,
   Register,
@@ -9,6 +9,8 @@ import {
   PostDetails,
   VerificationSuccess,
   SetNewPassword,
+  NativeHome,
+  Unauthorized, 
 } from "./pages"; // Import the page components
 import Hero from "./pages/Hero";
 
@@ -40,7 +42,9 @@ function App() {
         />
         {/* Protected Routes: Only accessible when authenticated */}
         <Route element={<Layout />}>
-          <Route path="/:id" element={<Home />} /> {/* Home page */}
+          <Route path="/:id" element={<TravellerHome />} /> {/*Travellers' Home page */}
+          <Route path="/:id" element={<NativeHome />} /> {/*Natives' Home page */}
+          <Route path="/:id" element={<Unauthorized />} /> {/* 404 */}
           <Route path="/profile/:id?" element={<Profile />} />{" "}
           {/* Profile page */}
           <Route path="/posts/:id" element={<PostDetails />} />
