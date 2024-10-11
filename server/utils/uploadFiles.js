@@ -1,7 +1,7 @@
 import cloudinary from "cloudinary";
 import fs from "fs";
 // Configure Cloudinary (add your cloudinary credentials here)
-cloudinary.config({
+cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_KEY_SECRET,
@@ -14,7 +14,7 @@ export const uploadOnCloudinary = async (localFilePath) => {
     
     console.log("Uploading image to Cloudinary:", localFilePath);
 
-    const response = await cloudinary.uploader.upload(localFilePath, {
+    const response = await cloudinary.v2.uploader.upload(localFilePath, {
       resource_type: "auto",  // This allows any kind of media (image, video, etc.)
     });
 
