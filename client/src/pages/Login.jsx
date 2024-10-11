@@ -42,19 +42,42 @@ const Login = () => {
       console.log("response.data: ", response.data);
       const { token, user } = response.data;
 
-      // Decode the token to get userType
-      const decodedToken = jwtDecode(token);
-      const { userType } = decodedToken;
+      // Decode the token
+      let decodedToken;
+      try {
+        decodedToken = jwtDecode(token);
+        console.log("Decoded Token: ", decodedToken); // This will log the entire decoded token
+      } catch (decodeError) {
+        console.error("Token decoding failed:", decodeError);
+        setErrMsg("Failed to decode token");
+        return;
+      }
 
-      dispatch(UserLogin(user, token));
+      // Extract userType from decoded token
+      const { userId } = decodedToken;
+      
+      if (userId) {
+        const { userType } = userId;
+        console.log("Extracted userType:", userType); // Check if userType is extracted correctly
 
-      // Role-based redirection
-      if (userType === "traveller") {
-        navigate("/traveller-home");
-      } else if (userType === "native") {
-        navigate("/native-home");
+        if (!userType) {
+          setErrMsg("Invalid token: userType missing");
+          return;
+        }
+
+        dispatch(UserLogin(user, token));
+        const lowerCaseUserType = userType.toLowerCase(); // Convert to lowercase for consistency
+
+        // Role-based redirection
+        if (lowerCaseUserType === "traveller") {
+          navigate("/traveller-home");
+        } else if (lowerCaseUserType === "native") {
+          navigate("/native-home");
+        } else {
+          navigate("/pagenotfound"); // Fallback in case no userType is found
+        }
       } else {
-        navigate("/pagenotfound"); // Fallback in case no userType is found
+        setErrMsg("userId not found in the token");
       }
     } catch (error) {
       setErrMsg("Invalid email or password");

@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema(
       minlength: [6, "Password length should be greater than 6 characters"],
       select: true,
     },
+    userType: {
+      type: String,
+      enum: ["Traveller", "Native"],
+      required: [true, "User Type is Required!"],
+    },
     location: { type: String },
     profileUrl: { type: String },
     profession: { type: String },

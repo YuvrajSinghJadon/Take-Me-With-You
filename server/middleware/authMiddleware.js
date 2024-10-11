@@ -17,7 +17,8 @@ const userAuth = async (req, res, next) => {
   try {
     console.log("Verifying token...");
     const userToken = JWT.verify(token, process.env.JWT_SECRET_KEY); // Verify the token
-    req.user = { userId: userToken.userId }; // Attach user info to req
+    // Attach both userId and userType (role) to req.user
+    req.user = { userId: userToken.userId, userType: userToken.userType };
 
     console.log("Token verified, proceeding to next middleware...");
     next(); // Move to the next middleware/controller
@@ -28,6 +29,19 @@ const userAuth = async (req, res, next) => {
       message: "Authentication failed: Invalid token.",
     });
   }
+};
+
+export const authorizeRoles = (allowedRoles) => {
+  return (req, res, next) => {
+    // Ensure the user is authenticated and has the correct role
+    if (!allowedRoles.includes(req.user.userType)) {
+      return res.status(403).json({
+        success: false,
+        message: "Authorization failed: Access denied.",
+      });
+    }
+    next(); // User is authorized, proceed to the next middleware/controller
+  };
 };
 
 export default userAuth;
