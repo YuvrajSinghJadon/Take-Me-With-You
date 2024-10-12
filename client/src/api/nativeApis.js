@@ -112,11 +112,11 @@ export const startConversation = async (nativeId, travellerId, token) => {
         nativeId,
         travellerId,
       },
-        {
-            headers: {
-                Authorization: `Bearer ${token}`, // Use token from the argument
-            },
-        }
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // Use token from the argument
+        },
+      }
     );
     return response.data;
   } catch (error) {
@@ -147,13 +147,45 @@ export const editMessage = async (messageId, newMessageContent, token) => {
 // Delete a message
 export const deleteMessage = async (messageId, token) => {
   try {
-    await axios.delete(`${import.meta.env.VITE_API_URL}/natives/conversations/${messageId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    await axios.delete(
+      `${import.meta.env.VITE_API_URL}/natives/conversations/${messageId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
   } catch (error) {
     console.error("Error deleting message:", error);
+    throw error;
+  }
+};
+
+//Review API Calls
+export const submitReview = async (
+  nativeId,
+  travellerId,
+  reviewData,
+  token
+) => {
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/natives/reviews`,
+      {
+        nativeId,
+        travellerId,
+        rating: reviewData.rating,
+        reviewText: reviewData.reviewText,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error submitting review:", error);
     throw error;
   }
 };

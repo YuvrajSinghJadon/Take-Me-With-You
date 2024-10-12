@@ -6,8 +6,16 @@ import {
   startConversation,
   editMessage,
   deleteMessage,
+  submitReview,
 } from "../../api/nativeApis.js";
-import { FaPaperclip, FaSmile, FaEdit, FaTrashAlt } from "react-icons/fa";
+import {
+  FaRegStar,
+  FaStar,
+  FaPaperclip,
+  FaSmile,
+  FaEdit,
+  FaTrashAlt,
+} from "react-icons/fa";
 import { io } from "socket.io-client"; // Import Socket.io
 import moment from "moment";
 
@@ -22,6 +30,9 @@ const NativeProfile = () => {
   const [typingStatus, setTypingStatus] = useState("");
   const [conversationId, setConversationId] = useState(null); // Store conversationId
   const messagesEndRef = useRef(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false); // For review modal
+  const [rating, setRating] = useState(0); // Star rating
+  const [reviewText, setReviewText] = useState(""); // Review text
   const { token, user } = useSelector((state) => state.user);
   const socketRef = useRef(null); // Use ref to avoid socket reinitialization
 
@@ -39,7 +50,7 @@ const NativeProfile = () => {
     };
     loadNativeProfile();
   }, [nativeId, token]);
-
+  console.log("nativeData", nativeData);
   // Initialize socket and join the conversation room when chat opens
   useEffect(() => {
     if (isChatOpen && conversationId) {
@@ -175,6 +186,39 @@ const NativeProfile = () => {
     }
   };
 
+  // Handle Review Submission
+  const handleSubmitReview = async () => {
+    if (!rating || !reviewText) {
+      alert("Please provide a rating and review text.");
+      return;
+    }
+
+    try {
+      await submitReview(nativeId, user._id, { rating, reviewText }, token);
+      alert("Review submitted successfully!");
+      setIsReviewOpen(false); // Close modal
+      setRating(0); // Reset rating
+      setReviewText(""); // Reset review text
+    } catch (err) {
+      alert("Failed to submit review");
+    }
+  };
+  // Render stars for rating input
+  const renderStars = () => {
+    return [...Array(5)].map((_, index) => (
+      <span
+        key={index}
+        className="cursor-pointer"
+        onClick={() => setRating(index + 1)}
+      >
+        {index + 1 <= rating ? (
+          <FaStar className="text-yellow-500" />
+        ) : (
+          <FaRegStar className="text-gray-300" />
+        )}
+      </span>
+    ));
+  };
   // Scroll to the latest message
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -212,9 +256,72 @@ const NativeProfile = () => {
         </h2>
         <p className="text-gray-600 dark:text-gray-300">{nativeData.bio}</p>
       </div>
+      {/* Reviews Section */}
+      <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          What Our Customers Are Saying
+        </h2>
+
+        {/* Horizontal Scrollable Container */}
+        <div className="flex space-x-6 overflow-x-auto pb-4">
+          {nativeData.reviews && nativeData.reviews.length > 0 ? (
+            nativeData.reviews.map((review) => (
+              <div
+                key={review._id}
+                className="bg-white dark:bg-gray-700 rounded-lg shadow p-4 flex items-start space-x-4 min-w-[300px]"
+              >
+                {/* Reviewer Profile Image */}
+                <img
+                  src={review.traveller?.profileUrl || "default-avatar.png"}
+                  alt={review.traveller?.firstName || "Anonymous"}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+
+                {/* Review Content */}
+                <div className="flex-1">
+                  <p className="text-gray-800 dark:text-gray-200 mb-2">
+                    {review.comment}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      {review.traveller?.firstName || "Anonymous"}
+                    </span>
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <FaStar
+                          key={i}
+                          className={`${
+                            i < review.rating
+                              ? "text-yellow-500"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400">
+              No reviews yet. Be the first to review!
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Add Review Button */}
+      <div className="text-center mt-4">
+        <button
+          onClick={() => setIsReviewOpen(true)}
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"
+        >
+          Add Review
+        </button>
+      </div>
 
       {/* Enquiry Button */}
-      <div className="text-center mt-8">
+      <div className="text-center mt-4">
         <button
           onClick={handleEnquiry}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
@@ -222,6 +329,43 @@ const NativeProfile = () => {
           Enquire Now
         </button>
       </div>
+
+      {/* Review Modal */}
+      {isReviewOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-lg">
+            <h2 className="text-lg font-bold text-center mb-4">Add a Review</h2>
+            <div className="mb-4">
+              <h3 className="text-lg">Rating:</h3>
+              <div className="flex space-x-2">{renderStars()}</div>
+            </div>
+            <div className="mb-4">
+              <h3 className="text-lg">Review:</h3>
+              <textarea
+                className="w-full p-3 rounded-lg bg-gray-200 dark:bg-gray-600 text-black dark:text-white focus:outline-none"
+                rows="4"
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Write your review here..."
+              ></textarea>
+            </div>
+            <div className="flex justify-between">
+              <button
+                onClick={handleSubmitReview}
+                className="bg-blue-500 text-white p-3 rounded-lg shadow hover:bg-blue-600"
+              >
+                Submit Review
+              </button>
+              <button
+                onClick={() => setIsReviewOpen(false)}
+                className="bg-red-500 text-white p-3 rounded-lg shadow hover:bg-red-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Chat Modal */}
       {isChatOpen && (

@@ -17,6 +17,7 @@ import {
   startConversation,
   editMessage,
   deleteMessage,
+  submitReview,
 } from "../controllers/nativeController.js";
 
 const router = Router();
@@ -83,6 +84,8 @@ router.get(
   authorizeRoles(["native"]),
   getReviews
 );
+
+router.post(`/reviews`, userAuth, authorizeRoles(["traveller"]), submitReview);
 
 // Native General Info Route
 router.get(

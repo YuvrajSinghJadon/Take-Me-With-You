@@ -47,9 +47,10 @@ export const getHomepage = async (req, res) => {
 // Get Native Profile
 export const getProfile = async (req, res) => {
   try {
-    const native = await Natives.findById(req.params.nativeId)
-      .populate("services")
-      .populate("reviews.traveller", "name");
+    const native = await Natives.findById(req.params.nativeId).populate({
+      path: "reviews.traveller", // Populate traveller field in reviews
+      select: "firstName profileUrl", // Select only firstName and profileUrl
+    });
     if (!native) return res.status(404).json({ message: "Native not found" });
     res.json(native);
   } catch (error) {
@@ -229,46 +230,55 @@ export const getReviews = async (req, res) => {
   }
 };
 
-export const postReviews = async (req, res) => {
-  const { nativeId } = req.params;
-  const { rating, comment } = req.body;
-  const travellerId = req.user.userId;
+export const submitReview = async (req, res) => {
+  const { nativeId, travellerId, rating, reviewText } = req.body;
 
   try {
-    // Check if the traveller has used any service from this native
-    const serviceBooking = await Booking.findOne({
-      nativeId,
-      travellerId,
-      status: "completed", // Only completed bookings
-    });
+    // Find the native by ID
+    const native = await Natives.findById(nativeId);
 
-    if (!serviceBooking) {
-      return res
-        .status(400)
-        .json({ message: "You cannot review without completing a service." });
+    if (!native) {
+      return res.status(404).json({ message: "Native not found" });
+    }
+    // Check if the traveller has already submitted a review
+    const existingReview = native.reviews.find(
+      (review) => review.traveller.toString() === travellerId
+    );
+
+    if (existingReview) {
+      return res.status(400).json({
+        message: "You have already submitted a review for this native.",
+      });
     }
 
-    // Create a review
-    const review = { traveller: travellerId, rating, comment };
-    const native = await Natives.findById(nativeId);
-    native.reviews.push(review);
+    // Add the new review to the native's reviews array
+    const newReview = {
+      traveller: travellerId,
+      rating: rating,
+      comment: reviewText,
+      createdAt: Date.now(),
+    };
 
-    // Recalculate the average rating
-    native.ratings.averageRating =
-      (native.ratings.averageRating * native.ratings.numberOfRatings + rating) /
-      (native.ratings.numberOfRatings + 1);
-    native.ratings.numberOfRatings += 1;
+    native.reviews.push(newReview);
 
+    // Update the number of ratings and the average rating
+    const totalRatings = native.ratings.numberOfRatings + 1;
+    const totalRatingValue =
+      native.ratings.averageRating * native.ratings.numberOfRatings + rating;
+    const averageRating = totalRatingValue / totalRatings;
+
+    native.ratings.averageRating = averageRating;
+    native.ratings.numberOfRatings = totalRatings;
+
+    // Save the updated native
     await native.save();
-    res.status(201).json({
-      success: true,
-      message: "Review added successfully",
-      data: native.reviews,
-    });
+
+    res.status(200).json({ success: true, review: newReview });
   } catch (error) {
-    res.status(500).json({ message: "Error adding review", error });
+    res.status(500).json({ message: "Failed to submit review", error });
   }
 };
+
 // Get General Info for Native
 export const getGeneralInfo = async (req, res) => {
   try {
