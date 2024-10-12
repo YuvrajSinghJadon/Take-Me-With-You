@@ -37,8 +37,6 @@ const JoinRequests = ({ posts }) => {
     fetchJoinRequests();
   }, [posts]);
 
-  
-
   // Function to handle accepting the request
   const acceptRequest = async (requestId) => {
     try {
@@ -101,7 +99,7 @@ const JoinRequests = ({ posts }) => {
     return <Loading />; // Show loading spinner if data is still loading
   }
   return (
-    <div className="w-full bg-white rounded-lg shadow-lg p-4">
+    <div className=" bg-white rounded-lg shadow-lg p-4">
       {/* Header showing total join requests */}
       <div className="text-lg font-semibold mb-4">
         {requests.length} Join Requests

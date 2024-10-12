@@ -5,7 +5,7 @@ import Posts from "../models/PostModel.js";
 import JoinRequests from "../models/joinRequests.js";
 import { uploadOnCloudinary } from "../utils/uploadFiles.js";
 import sendWhatsAppMessage from "../utils/smsService.js";
-import { emitPostCreated } from "../socket.js";
+import { emitPostCreated } from "../webSockets/postSocket.js";
 import sendPushNotification from "../utils/sendPushNotification.js";
 // Create a Posts
 export const createPost = async (req, res) => {

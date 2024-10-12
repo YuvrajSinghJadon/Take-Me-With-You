@@ -10,7 +10,7 @@ import dbConnection from "./dbConfig/index.js";
 import errorMiddleware from "./middleware/errorMiddleware.js";
 import router from "./routes/index.js";
 import { createServer } from "http"; // Import HTTP server to use with Socket.IO
-import { initializeSocket } from "./socket.js"; // Import Socket.IO setup
+import { initializeSocket } from "./webSockets/socket.js"; // Import Socket.IO setup
 
 const __dirname = path.resolve(path.dirname(""));
 

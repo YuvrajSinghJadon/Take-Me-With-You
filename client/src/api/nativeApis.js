@@ -82,3 +82,45 @@ export const deleteService = async (nativeId, serviceId, token) => {
     throw error;
   }
 };
+
+////NATIVE PROFILE  API CALLS
+
+// Get Native Profile Data
+export const fetchNativeProfile = async (nativeId, token) => {
+  try {
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/natives/${nativeId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // Use token from the argument
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching native profile:", error);
+    throw error;
+  }
+};
+
+// Start or get an existing conversation between native and traveller
+export const startConversation = async (nativeId, travellerId, token) => {
+  try {
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/natives/conversations`,
+      {
+        nativeId,
+        travellerId,
+      },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`, // Use token from the argument
+            },
+        }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error starting conversation:", error);
+    throw error;
+  }
+};

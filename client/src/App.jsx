@@ -1,5 +1,6 @@
 import { Outlet, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { NativeProfile } from "./components/nativeComponents"; // Import NativeProfile component
 import {
   TravellerHome,
   Login,
@@ -76,6 +77,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["traveller", "native"]}>
                 <PostDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/natives/:nativeId"
+            element={
+              <ProtectedRoute allowedRoles={["traveller"]}>
+                <NativeProfile />
               </ProtectedRoute>
             }
           />

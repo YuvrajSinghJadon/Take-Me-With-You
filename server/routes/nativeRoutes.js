@@ -13,9 +13,14 @@ import {
   getReviews,
   getGeneralInfo,
   getHomepage,
+  findNativesByLocation,
+  startConversation,
 } from "../controllers/nativeController.js";
 
 const router = Router();
+
+//Fetch Natives by location
+router.get(`/`, userAuth, authorizeRoles(["traveller"]), findNativesByLocation);
 
 // Native Homepage Route
 router.get(
@@ -26,14 +31,10 @@ router.get(
 );
 
 // Native Profile Routes
-router.get(
-  `/:nativeId/profile`,
-  userAuth,
-  authorizeRoles(["native"]),
-  getProfile
-);
-router.patch(
-  `/:nativeId/profile`,
+router.get(`/:nativeId`, userAuth, authorizeRoles(["traveller"]), getProfile);
+
+router.put(
+  `/update-profile/:nativeId`,
   userAuth,
   authorizeRoles(["native"]),
   updateProfile
@@ -89,7 +90,7 @@ router.get(
   getGeneralInfo
 );
 
-
-
+//conversations
+router.post(`/conversations`, userAuth, startConversation);
 
 export default router;

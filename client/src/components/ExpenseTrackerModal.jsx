@@ -266,9 +266,9 @@ const ExpenseTrackerModal = ({ tripId, closeModal, group }) => {
         {/* Close Button */}
         <button
           onClick={resetFormAndCloseModal}
-          className="absolute top-2 right-2 text-gray-700"
+          className="absolute text-3xl top-8 right-8"
         >
-          Close
+          ❌
         </button>
       </div>
     </div>

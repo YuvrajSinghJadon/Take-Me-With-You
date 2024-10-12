@@ -7,7 +7,7 @@ import GroupChat from "../components/GroupChat";
 import { FaTrashAlt } from "react-icons/fa"; // Import Trash Icon
 import JoinRequests from "../components/JoinRequests";
 import ExpenseTrackerModal from "../components/ExpenseTrackerModal"; // Import the modal component
-
+import NativeList from "../components/nativeComponents/NativeList";
 const PostDetails = () => {
   const { id } = useParams(); // Get the post ID from the URL
   const [post, setPost] = useState(null); // Store the post data
@@ -17,7 +17,10 @@ const PostDetails = () => {
   const [isChatOpen, setIsChatOpen] = useState(false); // Modal state for Group Chat
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   // Get the logged-in user from Redux store
-  const { user } = useSelector((state) => state.user);
+  const { user, token } = useSelector((state) => state.user);
+
+  const [natives, setNatives] = useState([]); // Store natives data
+  const [nativesError, setNativesError] = useState(null);
 
   // Fetch the post and related group data
   useEffect(() => {
@@ -27,7 +30,7 @@ const PostDetails = () => {
           `${import.meta.env.VITE_API_URL}/posts/${id}`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -61,7 +64,7 @@ const PostDetails = () => {
           }/`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -85,7 +88,7 @@ const PostDetails = () => {
           }/remove/${userId}`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -99,6 +102,32 @@ const PostDetails = () => {
       }
     } catch (error) {
       console.error("Error removing user:", error);
+    }
+  };
+
+  // Function to find natives by location
+  const handleFindNatives = async () => {
+    if (!post || !post.destinations || post.destinations.length === 0) {
+      setNativesError("No destinations specified in the post.");
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/natives?location=${
+          post.destinations[0]
+        }`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setNatives(response.data); // Set the natives data to the state
+      setNativesError(null);
+    } catch (error) {
+      console.error("Error fetching natives:", error);
+      setNativesError("Failed to fetch natives.");
     }
   };
 
@@ -192,7 +221,7 @@ const PostDetails = () => {
             )}
           </div>
           {user?._id === post.userId?._id && (
-            <div className=" w-1/4 mt-5">
+            <div className=" mx-auto mt-5 flex justify-between">
               <JoinRequests posts={[post]} />
             </div>
           )}
@@ -226,6 +255,22 @@ const PostDetails = () => {
                 group={group}
               />
             )}
+          </div>
+          <div>
+            {/* Find Natives Button */}
+            <button
+              className="bg-blue-500 text-white p-2 rounded-lg mt-4"
+              onClick={handleFindNatives}
+            >
+              Find Natives in {post.destinations[0]}
+            </button>
+
+            {/* Display Natives List */}
+            {natives.length > 0 ? (
+              <NativeList natives={natives} />
+            ) : nativesError ? (
+              <p className="text-red-500">{nativesError}</p>
+            ) : null}
           </div>
         </>
       )}

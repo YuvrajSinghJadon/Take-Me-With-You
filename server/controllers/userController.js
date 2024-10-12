@@ -5,9 +5,8 @@ import PasswordReset from "../models/PasswordReset.js";
 import { resetPasswordLink } from "../utils/sendEmail.js";
 import FriendRequest from "../models/friendRequest.js";
 import Natives from "../models/nativeModel.js";
-
-
-
+import DirectConversation from "../models/directConversationModel.js";
+import DirectMessage from "../models/directMessageModel.js";
 
 // Complete profile for Natives
 export const completeProfile = async (req, res) => {
@@ -406,5 +405,71 @@ export const suggestedFriends = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });
+  }
+};
+
+// Create or fetch existing conversation
+export const createOrGetConversation = async (req, res) => {
+  try {
+    const { participantId } = req.body;
+    const userId = req.user._id;
+
+    // Check if a conversation already exists between these two users
+    let conversation = await DirectConversation.findOne({
+      participants: { $all: [userId, participantId] },
+    });
+
+    if (!conversation) {
+      // If no conversation exists, create a new one
+      conversation = new DirectConversation({
+        participants: [userId, participantId],
+      });
+      await conversation.save();
+    }
+
+    res.status(200).json({ success: true, data: conversation });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// Send a message in the conversation
+export const sendMessage = async (req, res) => {
+  try {
+    const { conversationId, message } = req.body;
+    const senderId = req.user._id;
+
+    // Create a new message
+    const newMessage = new DirectMessage({
+      conversationId,
+      sender: senderId,
+      message,
+    });
+
+    await newMessage.save();
+
+    // Update the lastMessage in the conversation
+    await DirectConversation.findByIdAndUpdate(conversationId, {
+      lastMessage: newMessage._id,
+    });
+
+    res.status(200).json({ success: true, data: newMessage });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+
+export const getMessages = async (req, res) => {
+  const { conversationId } = req.params;
+
+  try {
+    const messages = await DirectMessage.find({ conversationId })
+      .populate("sender", "firstName lastName")
+      .sort({ createdAt: 1 }); // Sort messages in ascending order of timestamp
+
+    res.status(200).json({ success: true, data: messages });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 };

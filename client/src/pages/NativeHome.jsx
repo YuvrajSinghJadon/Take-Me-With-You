@@ -7,6 +7,7 @@ import {
   EarningsSection,
   RatingsSection,
   ReviewsSection,
+  UpdateProfileModal,
 } from "../components/nativeComponents";
 
 function NativeHome() {
@@ -15,6 +16,7 @@ function NativeHome() {
   const [nativeData, setNativeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal
 
   useEffect(() => {
     console.log(`${import.meta.env.VITE_API_URL}/natives/homepage/${user._id}`);
@@ -69,6 +71,24 @@ function NativeHome() {
       <div className="mt-8">
         <ReviewsSection reviews={nativeData.reviews} />
       </div>
+      <div className="flex  mb-4">
+        {/* Update Profile Button */}
+        <button
+          className="bg-blue-500 text-white py-2 px-4 rounded-lg"
+          onClick={() => setIsModalOpen(true)} // Open the modal
+        >
+          Update Profile
+        </button>
+      </div>
+      {/* Modal Component */}
+      {isModalOpen && (
+        <UpdateProfileModal
+          nativeData={nativeData}
+          onClose={() => setIsModalOpen(false)} // Close modal after submission
+          token={token}
+          setNativeData={setNativeData} // Update nativeData on successful submission
+        />
+      )}
     </div>
   );
 }

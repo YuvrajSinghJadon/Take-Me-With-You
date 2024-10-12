@@ -1,5 +1,24 @@
 import Natives from "../models/nativeModel.js";
+import Conversation from "../models/directConversationModel.js";
 
+//Find Natives by Location
+export const findNativesByLocation = async (req, res) => {
+  const { location } = req.query;
+
+  try {
+    const natives = await Natives.find({
+      city: { $regex: location, $options: "i" },
+    });
+    if (natives.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No natives found in this location." });
+    }
+    res.status(200).json(natives);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
 // Native Homepage Controller
 export const getHomepage = async (req, res) => {
   try {
@@ -28,20 +47,15 @@ export const getHomepage = async (req, res) => {
 // Get Native Profile
 export const getProfile = async (req, res) => {
   try {
-    const native = await Natives.findOne({ user: req.params.nativeId });
-    if (!native) {
-      return res.status(404).json({ message: "Native not found" });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: native,
-    });
+    const native = await Natives.findById(req.params.nativeId)
+      .populate("services")
+      .populate("reviews.traveller", "name");
+    if (!native) return res.status(404).json({ message: "Native not found" });
+    res.json(native);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({ message: "Server error" });
   }
 };
-
 // Update Native Profile
 export const updateProfile = async (req, res) => {
   try {
@@ -246,13 +260,11 @@ export const postReviews = async (req, res) => {
     native.ratings.numberOfRatings += 1;
 
     await native.save();
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Review added successfully",
-        data: native.reviews,
-      });
+    res.status(201).json({
+      success: true,
+      message: "Review added successfully",
+      data: native.reviews,
+    });
   } catch (error) {
     res.status(500).json({ message: "Error adding review", error });
   }
@@ -295,5 +307,30 @@ export const searchNatives = async (req, res) => {
     res.status(200).json({ success: true, data: natives });
   } catch (error) {
     res.status(500).json({ message: "Error fetching natives", error });
+  }
+};
+
+// Controller to start a new conversation or get an existing one
+export const startConversation = async (req, res) => {
+  const { nativeId, travellerId } = req.body;
+  try {
+    // Check if a conversation already exists between the native and traveller
+    let conversation = await Conversation.findOne({
+      native: nativeId,
+      traveller: travellerId,
+    });
+
+    if (!conversation) {
+      // Create a new conversation if none exists
+      conversation = await Conversation.create({
+        native: nativeId,
+        traveller: travellerId,
+        lastMessage: null,
+      });
+    }
+
+    res.status(200).json({ conversationId: conversation._id });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
   }
 };
