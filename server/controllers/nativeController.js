@@ -32,6 +32,7 @@ export const getHomepage = async (req, res) => {
     }
 
     res.status(200).json({
+      id: native._id,
       services: native.services,
       earnings: native.earnings,
       reviews: native.reviews,
@@ -374,5 +375,44 @@ export const deleteMessage = async (req, res) => {
     res.status(200).json({ message: "Message deleted" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting message", error });
+  }
+};
+
+//get all conversations of the native
+export const getNativeConversations = async (req, res) => {
+  const nativeId = req.params.nativeId;
+  console.log("Native ID from get:", nativeId);
+  try {
+    const conversations = await Conversation.find({ nativeId })
+      .populate("travellerId", "firstName profileUrl") // Include traveller's details
+      .populate("lastMessage") // Include the last message of the conversation
+      .sort({ updatedAt: -1 }); // Sort by most recent message
+
+    res.status(200).json(conversations);
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+//get all messages of a conversation
+export const getMessagesByConversationId = async (req, res) => {
+  const { conversationId } = req.params; // Get conversationId from the request params
+
+  try {
+    // Find messages with the matching conversationId
+    const messages = await DirectMessage.find({ conversationId })
+      .sort({ timestamp: 1 }) // Sort messages by timestamp in ascending order
+      .populate("senderId", "firstName lastName profileUrl"); // Populate sender info if needed
+
+    if (!messages) {
+      return res.status(404).json({ message: "No messages found for this conversation." });
+    }
+
+    // Return the messages
+    return res.status(200).json(messages);
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    return res.status(500).json({ message: "Server error. Could not fetch messages." });
   }
 };

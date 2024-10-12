@@ -94,7 +94,7 @@ export const resetPassword = async (req, res) => {
 
     // If the token is valid, redirect to the SetNewPassword page
     return res.redirect(
-      `${process.env.APP_FRONTEND_URL}/reset-password/${userId}/${token}`
+      `${process.env.APP_FRONTEND_URL}/reset/${userId}/${token}`
     );
   } catch (error) {
     console.log(error);
@@ -144,7 +144,7 @@ export const getUserById = async (req, res) => {
     const { id } = req.params;
 
     // Assuming you have a User model
-    const user = await Users.findById(id).select("-password"); // Exclude the password field
+    const user = await Users.findById(id).select(""); // Exclude the password field
 
     if (!user) {
       return res.status(404).json({
@@ -394,7 +394,7 @@ export const suggestedFriends = async (req, res) => {
 
     let queryResult = Users.find(queryObject)
       .limit(15)
-      .select("firstName lastName profileUrl profession -password");
+      .select("firstName lastName profileUrl profession ");
 
     const suggestedFriends = await queryResult;
 

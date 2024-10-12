@@ -18,6 +18,8 @@ import {
   editMessage,
   deleteMessage,
   submitReview,
+  getNativeConversations,
+  getMessagesByConversationId,
 } from "../controllers/nativeController.js";
 
 const router = Router();
@@ -99,4 +101,21 @@ router.get(
 router.post(`/conversations`, userAuth, startConversation);
 router.put("/conversations/:messageId", userAuth, editMessage);
 router.delete("/conversations/:messageId", userAuth, deleteMessage);
+
+// Native Conversations Route
+// get all conversations of a native
+router.get(
+  "/conversations/:nativeId",
+  userAuth,
+  authorizeRoles(["native"]),
+  getNativeConversations
+);
+// get all messages of a conversation
+router.get(
+  "/conversations/:conversationId",
+  userAuth,
+  authorizeRoles(["native"]),
+  getMessagesByConversationId
+);
+
 export default router;

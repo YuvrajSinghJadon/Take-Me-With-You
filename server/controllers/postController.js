@@ -10,7 +10,7 @@ import sendPushNotification from "../utils/sendPushNotification.js";
 // Create a Posts
 export const createPost = async (req, res) => {
   try {
-    console.log("create post api hit")
+    console.log("create post api hit");
     const { userId } = req.user; // Get the authenticated userId from the req object
     const { description, startDate, estimatedDays, destinations } = req.body;
 
@@ -28,7 +28,7 @@ export const createPost = async (req, res) => {
       const uploadResult = await uploadOnCloudinary(req.file.path);
       if (uploadResult) {
         imageUrl = uploadResult.url; // Store the uploaded image URL
-        console.log("url image: ", imageUrl)
+        console.log("url image: ", imageUrl);
       }
     }
     //They below code is to check if multer is working fine.
@@ -81,7 +81,7 @@ export const getPosts = async (req, res) => {
     )
       .populate({
         path: "userId",
-        select: "firstName lastName location profileUrl -password",
+        select: "firstName lastName location profileUrl ",
       })
       .sort({ _id: -1 }) // Sort posts in descending order (most recent first)
       .skip(skip) // Skip the previous pages' posts
@@ -112,7 +112,7 @@ export const getPost = async (req, res) => {
 
     const post = await Posts.findById(id).populate({
       path: "userId",
-      select: "firstName lastName location profileUrl -password",
+      select: "firstName lastName location profileUrl ",
     });
 
     if (!post) {
@@ -139,7 +139,7 @@ export const getUserPost = async (req, res) => {
     const posts = await Posts.find({ userId })
       .populate({
         path: "userId",
-        select: "firstName lastName location profileUrl -password",
+        select: "firstName lastName location profileUrl ",
       })
       .sort({ _id: -1 });
 
@@ -171,7 +171,7 @@ export const getUserPostsWithJoinRequests = async (req, res) => {
     const posts = await Posts.find({ userId })
       .populate({
         path: "userId",
-        select: "firstName lastName location profileUrl -password",
+        select: "firstName lastName location profileUrl ",
       })
       .populate({
         path: "joinRequests", // Populate the joinRequests for each post
@@ -216,11 +216,11 @@ export const getComments = async (req, res) => {
     const comments = await Comments.find({ postId })
       .populate({
         path: "userId",
-        select: "firstName lastName location profileUrl -password",
+        select: "firstName lastName location profileUrl ",
       })
       .populate({
         path: "replies.userId",
-        select: "firstName lastName location profileUrl -password",
+        select: "firstName lastName location profileUrl ",
       })
       .sort({ _id: -1 });
 

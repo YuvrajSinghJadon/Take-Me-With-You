@@ -8,7 +8,7 @@ import PostCard from "./PostCard";
 import EditProfile from "./EditProfile";
 import JoinRequests from "./JoinRequests";
 import CreatePost from "./CreatePost";
-import Chat from "./Chat";
+import Chat from "./nativeComponents/Chat";
 import GroupChat from "./GroupChat";
 export {
   Loading,

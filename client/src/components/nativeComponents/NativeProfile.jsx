@@ -227,7 +227,7 @@ const NativeProfile = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
   if (!nativeData) return <div>Native not found</div>;
-
+  console.log("nativeData", nativeData);
   return (
     <div className="container mx-auto p-6 bg-gray-50 dark:bg-gray-900 rounded-xl shadow-lg">
       {/* Profile Header */}
@@ -256,6 +256,44 @@ const NativeProfile = () => {
         </h2>
         <p className="text-gray-600 dark:text-gray-300">{nativeData.bio}</p>
       </div>
+      {/* Services Section */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Services
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {nativeData.services && nativeData.services.length > 0 ? (
+            nativeData.services.map((service) => (
+              <div
+                key={service._id}
+                className="p-4 border rounded-lg shadow-md bg-gray-50 dark:bg-gray-700"
+              >
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                  {service.name}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                  {service.description}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  <strong>Price:</strong> ${service.price}
+                </p>
+                <p
+                  className={`text-sm font-semibold ${
+                    service.availability ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {service.availability ? "Available" : "Unavailable"}
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400">
+              No services available.
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Reviews Section */}
       <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
