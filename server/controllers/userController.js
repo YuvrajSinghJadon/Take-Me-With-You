@@ -408,68 +408,68 @@ export const suggestedFriends = async (req, res) => {
   }
 };
 
-// Create or fetch existing conversation
-export const createOrGetConversation = async (req, res) => {
-  try {
-    const { participantId } = req.body;
-    const userId = req.user._id;
+// // Create or fetch existing conversation
+// export const createOrGetConversation = async (req, res) => {
+//   try {
+//     const { participantId } = req.body;
+//     const userId = req.user._id;
 
-    // Check if a conversation already exists between these two users
-    let conversation = await DirectConversation.findOne({
-      participants: { $all: [userId, participantId] },
-    });
+//     // Check if a conversation already exists between these two users
+//     let conversation = await DirectConversation.findOne({
+//       participants: { $all: [userId, participantId] },
+//     });
 
-    if (!conversation) {
-      // If no conversation exists, create a new one
-      conversation = new DirectConversation({
-        participants: [userId, participantId],
-      });
-      await conversation.save();
-    }
+//     if (!conversation) {
+//       // If no conversation exists, create a new one
+//       conversation = new DirectConversation({
+//         participants: [userId, participantId],
+//       });
+//       await conversation.save();
+//     }
 
-    res.status(200).json({ success: true, data: conversation });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
+//     res.status(200).json({ success: true, data: conversation });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Server Error" });
+//   }
+// };
 
-// Send a message in the conversation
-export const sendMessage = async (req, res) => {
-  try {
-    const { conversationId, message } = req.body;
-    const senderId = req.user._id;
+// // Send a message in the conversation
+// export const sendMessage = async (req, res) => {
+//   try {
+//     const { conversationId, message } = req.body;
+//     const senderId = req.user._id;
 
-    // Create a new message
-    const newMessage = new DirectMessage({
-      conversationId,
-      sender: senderId,
-      message,
-    });
+//     // Create a new message
+//     const newMessage = new DirectMessage({
+//       conversationId,
+//       sender: senderId,
+//       message,
+//     });
 
-    await newMessage.save();
+//     await newMessage.save();
 
-    // Update the lastMessage in the conversation
-    await DirectConversation.findByIdAndUpdate(conversationId, {
-      lastMessage: newMessage._id,
-    });
+//     // Update the lastMessage in the conversation
+//     await DirectConversation.findByIdAndUpdate(conversationId, {
+//       lastMessage: newMessage._id,
+//     });
 
-    res.status(200).json({ success: true, data: newMessage });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
+//     res.status(200).json({ success: true, data: newMessage });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: "Server Error" });
+//   }
+// };
 
 
-export const getMessages = async (req, res) => {
-  const { conversationId } = req.params;
+// export const getMessages = async (req, res) => {
+//   const { conversationId } = req.params;
 
-  try {
-    const messages = await DirectMessage.find({ conversationId })
-      .populate("sender", "firstName lastName")
-      .sort({ createdAt: 1 }); // Sort messages in ascending order of timestamp
+//   try {
+//     const messages = await DirectMessage.find({ conversationId })
+//       .populate("sender", "firstName lastName")
+//       .sort({ createdAt: 1 }); // Sort messages in ascending order of timestamp
 
-    res.status(200).json({ success: true, data: messages });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
+//     res.status(200).json({ success: true, data: messages });
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };

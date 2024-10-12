@@ -1,6 +1,6 @@
 import Natives from "../models/nativeModel.js";
 import Conversation from "../models/directConversationModel.js";
-
+import DirectMessage from "../models/directMessageModel.js";
 //Find Natives by Location
 export const findNativesByLocation = async (req, res) => {
   const { location } = req.query;
@@ -313,24 +313,56 @@ export const searchNatives = async (req, res) => {
 // Controller to start a new conversation or get an existing one
 export const startConversation = async (req, res) => {
   const { nativeId, travellerId } = req.body;
+
   try {
     // Check if a conversation already exists between the native and traveller
     let conversation = await Conversation.findOne({
-      native: nativeId,
-      traveller: travellerId,
+      nativeId,
+      travellerId,
     });
 
     if (!conversation) {
       // Create a new conversation if none exists
       conversation = await Conversation.create({
-        native: nativeId,
-        traveller: travellerId,
+        nativeId,
+        travellerId,
         lastMessage: null,
+        lastActiveAt: Date.now(),
       });
     }
 
     res.status(200).json({ conversationId: conversation._id });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// Edit a message
+export const editMessage = async (req, res) => {
+  const { messageId } = req.params;
+  const { newMessageContent } = req.body;
+
+  try {
+    const updatedMessage = await DirectMessage.findByIdAndUpdate(
+      messageId,
+      { message: newMessageContent },
+      { new: true }
+    ).populate("sender", "firstName lastName");
+
+    res.status(200).json(updatedMessage);
+  } catch (error) {
+    res.status(500).json({ message: "Error editing message", error });
+  }
+};
+
+// Delete a message
+export const deleteMessage = async (req, res) => {
+  const { messageId } = req.params;
+
+  try {
+    await DirectMessage.findByIdAndDelete(messageId);
+    res.status(200).json({ message: "Message deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting message", error });
   }
 };

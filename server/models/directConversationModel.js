@@ -3,13 +3,16 @@ import mongoose, { Schema } from "mongoose";
 // DirectConversation Schema for 1:1 conversations
 const directConversationSchema = new mongoose.Schema(
   {
-    participants: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Users", // Both native and traveller are users
-        required: true,
-      },
-    ],
+    nativeId: {
+      type: Schema.Types.ObjectId,
+      ref: "Users", // Reference to the native user
+      required: true,
+    },
+    travellerId: {
+      type: Schema.Types.ObjectId,
+      ref: "Users", // Reference to the traveller user
+      required: true,
+    },
     lastMessage: {
       type: Schema.Types.ObjectId,
       ref: "DirectMessage", // Reference to the last message in the conversation

@@ -15,6 +15,8 @@ import {
   getHomepage,
   findNativesByLocation,
   startConversation,
+  editMessage,
+  deleteMessage,
 } from "../controllers/nativeController.js";
 
 const router = Router();
@@ -92,5 +94,6 @@ router.get(
 
 //conversations
 router.post(`/conversations`, userAuth, startConversation);
-
+router.put("/conversations/:messageId", userAuth, editMessage);
+router.delete("/conversations/:messageId", userAuth, deleteMessage);
 export default router;

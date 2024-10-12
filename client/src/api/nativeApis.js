@@ -124,3 +124,36 @@ export const startConversation = async (nativeId, travellerId, token) => {
     throw error;
   }
 };
+
+// Edit a message
+export const editMessage = async (messageId, newMessageContent, token) => {
+  try {
+    const response = await axios.put(
+      `${import.meta.env.VITE_API_URL}/natives/conversations/${messageId}`,
+      { newMessageContent },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error editing message:", error);
+    throw error;
+  }
+};
+
+// Delete a message
+export const deleteMessage = async (messageId, token) => {
+  try {
+    await axios.delete(`${import.meta.env.VITE_API_URL}/natives/conversations/${messageId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    throw error;
+  }
+};

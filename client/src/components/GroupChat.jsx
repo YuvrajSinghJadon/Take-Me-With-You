@@ -19,6 +19,8 @@ const GroupChat = ({ roomId }) => {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [isChatAccessible, setIsChatAccessible] = useState(true);
+
+  
   useEffect(() => {
     socket.emit("joinRoom", { roomId, userId: user._id });
 

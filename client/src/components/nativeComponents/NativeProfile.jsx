@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { fetchNativeProfile, startConversation } from "../../api/nativeApis.js";
+import {
+  fetchNativeProfile,
+  startConversation,
+  editMessage,
+  deleteMessage,
+} from "../../api/nativeApis.js";
 import { FaPaperclip, FaSmile, FaEdit, FaTrashAlt } from "react-icons/fa";
 import { io } from "socket.io-client"; // Import Socket.io
 import moment from "moment";
@@ -35,6 +40,65 @@ const NativeProfile = () => {
     loadNativeProfile();
   }, [nativeId, token]);
 
+  // Initialize socket and join the conversation room when chat opens
+  useEffect(() => {
+    if (isChatOpen && conversationId) {
+      // Initialize socket
+      socketRef.current = io(
+        import.meta.env.MODE === "development"
+          ? "http://localhost:8800"
+          : "https://take-me-with-you.onrender.com"
+      );
+
+      // Join the conversation room
+      socketRef.current.emit("joinConversation", {
+        conversationId,
+        userId: user._id,
+      });
+
+      // Listen for incoming messages
+      socketRef.current.on("receiveMessage", (newMessage) => {
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+        scrollToBottom();
+      });
+
+      // Listen for edited messages
+      socketRef.current.on("messageEdited", (updatedMessage) => {
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg._id === updatedMessage._id ? updatedMessage : msg
+          )
+        );
+      });
+
+      // Listen for deleted messages
+      socketRef.current.on("messageDeleted", (messageId) => {
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg._id !== messageId)
+        );
+      });
+
+      // Load chat history
+      socketRef.current.on("loadMessages", (chatHistory) => {
+        setMessages(chatHistory);
+        scrollToBottom();
+      });
+
+      // Typing indicator
+      socketRef.current.on("typing", (data) => {
+        setTypingStatus(data ? `${data} is typing...` : "");
+      });
+
+      // Cleanup function when component unmounts or chat closes
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+          socketRef.current = null;
+        }
+      };
+    }
+  }, [isChatOpen, conversationId, user._id]);
+
   // Handle enquiry and start conversation
   const handleEnquiry = async () => {
     try {
@@ -42,36 +106,7 @@ const NativeProfile = () => {
       if (conversation && conversation.conversationId) {
         setConversationId(conversation.conversationId); // Store conversationId
         setIsChatOpen(true);
-
-        // Initialize socket only when conversation starts
-        socketRef.current = io(
-          import.meta.env.MODE === "development"
-            ? "http://localhost:8800"
-            : "https://take-me-with-you.onrender.com"
-        );
-
-        // Join the conversation room
-        socketRef.current.emit("joinConversation", {
-          conversationId: conversation.conversationId,
-          userId: user._id,
-        });
-
-        // Receive messages
-        socketRef.current.on("receiveMessage", (newMessage) => {
-          setMessages((prevMessages) => [...prevMessages, newMessage]);
-          scrollToBottom();
-        });
-
-        // Load chat history
-        socketRef.current.on("loadMessages", (chatHistory) => {
-          setMessages(chatHistory);
-          scrollToBottom();
-        });
-
-        // Typing indicator
-        socketRef.current.on("typing", (data) => {
-          setTypingStatus(data ? `${data} is typing...` : "");
-        });
+        // Socket initialization moved to useEffect
       } else {
         throw new Error("Conversation ID is missing");
       }
@@ -82,6 +117,10 @@ const NativeProfile = () => {
 
   // Send message
   const sendMessage = () => {
+    if (!socketRef.current) {
+      console.error("Socket not initialized.");
+      return;
+    }
     if (message && user?._id && conversationId) {
       socketRef.current.emit("sendMessage", {
         conversationId,
@@ -100,19 +139,46 @@ const NativeProfile = () => {
     }
   };
 
+  // Edit message
+  const handleEdit = async (messageId, currentMessage) => {
+    if (!socketRef.current) {
+      console.error("Socket not initialized.");
+      return;
+    }
+    const newMessageContent = prompt("Edit your message", currentMessage);
+    if (newMessageContent && newMessageContent !== currentMessage) {
+      try {
+        await editMessage(messageId, newMessageContent, token);
+        socketRef.current.emit("editMessage", {
+          messageId,
+          newMessageContent,
+        });
+      } catch (error) {
+        console.error("Failed to edit message:", error);
+      }
+    }
+  };
+
+  // Delete message
+  const handleDelete = async (messageId) => {
+    if (!socketRef.current) {
+      console.error("Socket not initialized.");
+      return;
+    }
+    if (window.confirm("Are you sure you want to delete this message?")) {
+      try {
+        await deleteMessage(messageId, token);
+        socketRef.current.emit("deleteMessage", { messageId, conversationId });
+      } catch (error) {
+        console.error("Failed to delete message:", error);
+      }
+    }
+  };
+
   // Scroll to the latest message
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  // Clean up socket events when the component unmounts or chat closes
-  useEffect(() => {
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
-    };
-  }, []);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
@@ -180,29 +246,46 @@ const NativeProfile = () => {
               style={{ maxHeight: "300px" }}
             >
               {messages.length > 0 ? (
-                messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      msg.sender._id === user._id
-                        ? "justify-end"
-                        : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`p-3 rounded-lg max-w-xs shadow-md ${
-                        msg.sender._id === user._id
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-200 text-black"
-                      }`}
-                    >
-                      <p className="text-sm">{msg.message}</p>
-                      <span className="block text-xs opacity-75 mt-1">
-                        {moment(msg.createdAt).fromNow()}
-                      </span>
-                    </div>
-                  </div>
-                ))
+                <>
+                  {messages.map((msg, index) => {
+                    const isSameUser =
+                      msg.sender && msg.sender._id === user._id;
+                    return (
+                      <div
+                        key={msg._id || index}
+                        className={`flex ${
+                          isSameUser ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        <div
+                          className={`p-3 rounded-lg max-w-xs shadow-md ${
+                            isSameUser
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-200 text-black"
+                          }`}
+                        >
+                          <p className="text-sm">{msg.message}</p>
+                          <span className="block text-xs opacity-75 mt-1">
+                            {moment(msg.createdAt).fromNow()}
+                          </span>
+
+                          {isSameUser && (
+                            <div className="flex justify-end mt-2">
+                              <FaEdit
+                                className="text-white cursor-pointer mr-2"
+                                onClick={() => handleEdit(msg._id, msg.message)}
+                              />
+                              <FaTrashAlt
+                                className="text-white cursor-pointer"
+                                onClick={() => handleDelete(msg._id)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
               ) : (
                 <p className="text-center text-gray-500">No messages yet...</p>
               )}
