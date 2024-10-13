@@ -8,7 +8,8 @@ export const findNativesByLocation = async (req, res) => {
   try {
     const natives = await Natives.find({
       city: { $regex: location, $options: "i" },
-    });
+    }).populate("user", "firstName lastName profileUrl"); // Populate user details
+
     if (natives.length === 0) {
       return res
         .status(404)
@@ -19,6 +20,7 @@ export const findNativesByLocation = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+
 // Native Homepage Controller
 export const getHomepage = async (req, res) => {
   try {
@@ -406,13 +408,17 @@ export const getMessagesByConversationId = async (req, res) => {
       .populate("senderId", "firstName lastName profileUrl"); // Populate sender info if needed
 
     if (!messages) {
-      return res.status(404).json({ message: "No messages found for this conversation." });
+      return res
+        .status(404)
+        .json({ message: "No messages found for this conversation." });
     }
 
     // Return the messages
     return res.status(200).json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);
-    return res.status(500).json({ message: "Server error. Could not fetch messages." });
+    return res
+      .status(500)
+      .json({ message: "Server error. Could not fetch messages." });
   }
 };

@@ -41,6 +41,7 @@ function NativeHome() {
 
   // Fetch native profile data
   useEffect(() => {
+
     const fetchNativeData = async () => {
       try {
         const response = await axios.get(
@@ -57,7 +58,7 @@ function NativeHome() {
     };
     fetchNativeData();
   }, [user._id, token]);
-
+  console.log("Native ID from get:", nativeData);
   // Fetch active conversations
   useEffect(() => {
     if (!nativeData) return;
@@ -65,7 +66,7 @@ function NativeHome() {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_API_URL}/natives/conversations/${
-            nativeData.id
+            nativeData?.id
           }`,
           { headers: { Authorization: `Bearer ${token}` } }
         );

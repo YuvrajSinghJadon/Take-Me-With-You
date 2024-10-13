@@ -3,13 +3,16 @@ import { FaStar } from "react-icons/fa"; // For displaying ratings
 
 const NativeCard = ({ native, onClick }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 w-full mb-6">
+    <div className="bg-white dark:bg-gray-800 py-2 px-4 rounded-xl shadow-lg flex flex-grow items-center space-x-4 w-full mb-6">
       {/* Profile Picture */}
       <div className="flex-shrink-0">
         <img
           className="h-20 w-20 rounded-full object-cover"
-          src={native.profilePicture || "default-avatar.png"} // Placeholder if no picture
-          alt={`${native.name}'s profile`}
+          src={
+            native.user.profileUrl ||
+            "https://i.pinimg.com/736x/09/e2/6f/09e26fa6a1fa11074c880e3b88691f4b.jpg"
+          } // Placeholder if no picture
+          alt={`${native.user.name}'s profile`}
         />
       </div>
 
@@ -17,7 +20,7 @@ const NativeCard = ({ native, onClick }) => {
       <div className="flex-1">
         {/* Name */}
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          {native.name}
+          {native.user.firstName} {native.user.lastName}
         </h2>
 
         {/* Ratings */}
