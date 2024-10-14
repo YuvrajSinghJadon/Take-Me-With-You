@@ -31,16 +31,6 @@ export const createPost = async (req, res) => {
         console.log("url image: ", imageUrl);
       }
     }
-    //They below code is to check if multer is working fine.
-    // if (req.file) {
-    //   console.log("File uploaded successfully via Multer:", req.file);
-    //   res.status(201).json({
-    //     success: true,
-    //     message: "File uploaded",
-    //     filePath: req.file.path,
-    //   });
-    // }
-
     // Create the post with the destinations array and optional image URL
     const post = await Posts.create({
       userId,

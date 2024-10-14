@@ -1,6 +1,7 @@
 import { Server as socketIO } from "socket.io";
 import { groupChatSocketEvents } from "./groupChatSocket.js";
 import { directMessageSocketEvents } from "./directMessageSocket.js";
+import { postSocketEvents } from "./postSocket.js";
 
 export const initializeSocket = (server) => {
   const io = new socketIO(server, {
@@ -13,9 +14,10 @@ export const initializeSocket = (server) => {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
-    // Initialize both group and direct chat socket events
+    // Initialize  group ,direct chat and post socket events
     groupChatSocketEvents(socket, io);
     directMessageSocketEvents(socket, io);
+    postSocketEvents(socket, io); 
 
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);

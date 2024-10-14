@@ -1,23 +1,24 @@
 // webSockets/postSocket.js
-let io;
+let ioInstance;
 
-export const initializePostSocket = (socketServer) => {
-  io = socketServer;
+export const postSocketEvents = (socket, io) => {
+  ioInstance = io; // Store the io instance for later use in emit functions
+  console.log("Post socket connected:", socket.id);
 
-  // Emit post creation event to all clients
-  io.on("connection", (socket) => {
-    console.log("Post socket connected:", socket.id);
+  // If you have specific event listeners for posts, set them up here
+  // For example:
+  // socket.on("somePostEvent", (data) => { ... });
 
-    socket.on("disconnect", () => {
-      console.log("Post socket disconnected:", socket.id);
-    });
+  socket.on("disconnect", () => {
+    console.log("Post socket disconnected:", socket.id);
   });
 };
 
 // Function to emit the post created event
 export const emitPostCreated = (post) => {
-  if (io) {
-    io.emit("postCreated", post); // Emit the post event
+  if (ioInstance) {
+    console.log("Emitting new post:", post);
+    ioInstance.emit("postCreated", post);
   } else {
     console.log("Socket.IO instance not initialized for posts");
   }

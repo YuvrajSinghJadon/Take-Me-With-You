@@ -13,7 +13,6 @@ import {
   Chat,
   GroupChat,
 } from "../components";
-import { Link } from "react-router-dom";
 import Notification from "../components/Notification";
 import { HiMenuAlt3 } from "react-icons/hi";
 import { io } from "socket.io-client";
