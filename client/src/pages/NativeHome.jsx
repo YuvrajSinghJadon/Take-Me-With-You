@@ -11,7 +11,7 @@ import {
   ReviewsSection,
   UpdateProfileModal,
 } from "../components/nativeComponents";
-
+import { FaEdit, FaTrashAlt } from "react-icons/fa";
 function NativeHome() {
   const { user, token } = useSelector((state) => state.user);
   const [nativeData, setNativeData] = useState(null);
@@ -23,10 +23,11 @@ function NativeHome() {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
+  const [editMode, setEditMode] = useState(null); // Track editing mode
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
 
-  // Initialize socket connection once on component mount
+  // Initialize socket connection on component mount
   useEffect(() => {
     socketRef.current = io(
       import.meta.env.MODE === "development"
@@ -35,13 +36,12 @@ function NativeHome() {
     );
 
     return () => {
-      socketRef.current.disconnect();
+      socketRef.current.disconnect(); // Cleanup socket on unmount
     };
   }, []);
 
   // Fetch native profile data
   useEffect(() => {
-
     const fetchNativeData = async () => {
       try {
         const response = await axios.get(
@@ -58,15 +58,16 @@ function NativeHome() {
     };
     fetchNativeData();
   }, [user._id, token]);
-  console.log("Native ID from get:", nativeData);
-  // Fetch active conversations
+
+  // Fetch conversations when native data is available
   useEffect(() => {
     if (!nativeData) return;
+
     const fetchConversations = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/natives/conversations/${
-            nativeData?.id
+          `${import.meta.env.VITE_API_URL}/natives/conversations/natives/${
+            nativeData.id
           }`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -84,33 +85,46 @@ function NativeHome() {
       const response = await axios.get(
         `${
           import.meta.env.VITE_API_URL
-        }/natives/conversations/${conversationId}`,
+        }/natives/conversations/messages/${conversationId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      setMessages(response.data.messages || []);
+      console.log("Messages response", response.data);
+      setMessages(response.data || []);
       setSelectedConversation(conversationId);
       setChatModalOpen(true);
-      console.log("Messages loaded:", response.data);
     } catch (error) {
       console.error("Error loading messages:", error);
       setMessages([]);
     }
   };
+  console.log("Messages", messages);
 
-  // Send a new message
   const sendMessage = () => {
-    if (!message.trim()) return;
+    if (message.trim()) {
+      const eventData = {
+        message,
+        conversationId: selectedConversation,
+        senderId: user._id, // Always include the senderId
+      };
 
-    const newMessage = {
+      if (editMode) {
+        eventData.messageId = editMode; // Add messageId for edit mode
+        eventData.newMessageContent = message; // Server expects this field for edit
+        socketRef.current.emit("editDirectMessage", eventData); // Emit edit event
+        setEditMode(null); // Exit edit mode
+      } else {
+        socketRef.current.emit("sendDirectMessage", eventData); // Emit new message event
+      }
+
+      setMessage(""); // Clear the input field
+    }
+  };
+  // Delete a message
+  const deleteMessage = (messageId) => {
+    socketRef.current.emit("deleteMessage", {
+      messageId,
       conversationId: selectedConversation,
-      senderId: user._id,
-      message,
-    };
-    socketRef.current.emit("sendMessage", newMessage);
-    setMessages((prev) => [...prev, newMessage]);
-    setMessage("");
-    scrollToBottom();
+    });
   };
 
   // Scroll to the latest message
@@ -118,21 +132,50 @@ function NativeHome() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Handle socket events for new messages
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!selectedConversation) return;
+
+    socketRef.current.emit("joinConversation", {
+      conversationId: selectedConversation,
+    });
+
+    socketRef.current.on("receiveMessage", (newMessage) => {
+      setMessages((prev) => [...prev, newMessage]); // Add new message to state
+      scrollToBottom(); // Keep chat scrolled to the bottom
+    });
+    // Handle edited messages
+    socketRef.current.on("messageEdited", (updatedMessage) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === updatedMessage._id ? updatedMessage : msg
+        )
+      );
+    });
+    socketRef.current.on("messageDeleted", (messageId) => {
+      setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
+    });
+
+    return () => {
+      socketRef.current.emit("leaveConversation", selectedConversation);
+      socketRef.current.off("receiveMessage");
+      socketRef.current.off("messageEdited"); // Clean up edited message event
+      socketRef.current.off("messageDeleted");
+    };
+  }, [selectedConversation]);
+
+  const handleEdit = (messageId, currentMessage) => {
+    setMessage(currentMessage); // Set the message in the input field
+    setEditMode(messageId); // Enable edit mode with the messageId
+  };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
-  if (!nativeData) return <div>No native data found</div>;
-
   return (
     <div className="bg-offWhite min-h-screen p-8 font-body">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
-          <ProfileSection {...nativeData} />
-        </div>
+        <ProfileSection {...nativeData} />
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <EarningsSection earnings={nativeData.earnings} />
           <RatingsSection ratings={nativeData.ratings} />
@@ -176,20 +219,35 @@ function NativeHome() {
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
             <h2 className="text-xl font-bold mb-4">Chat</h2>
             <div className="max-h-80 overflow-y-auto">
-              {messages.map((msg, index) => (
+              {messages.map((msg) => (
                 <div
-                  key={index}
-                  className={`mb-2 ${
-                    msg.senderId === user._id ? "text-right" : "text-left"
+                  key={msg._id}
+                  className={`mb-2 flex flex-col ${
+                    msg.sender._id === user._id ? "items-end" : "items-start"
                   }`}
                 >
-                  <p className="inline-block p-2 bg-gray-200 rounded-lg">
+                  <p className="inline-block p-2 bg-gray-200 rounded-lg max-w-xs">
                     {msg.message}
                   </p>
+
+                  {/* Edit and Delete Icons for User's Own Messages */}
+                  {msg.sender._id === user._id && (
+                    <div className="flex space-x-2 mt-1">
+                      <FaEdit
+                        onClick={() => handleEdit(msg._id, msg.message)}
+                        className="text-blue-500 cursor-pointer"
+                      />
+                      <FaTrashAlt
+                        onClick={() => deleteMessage(msg._id)}
+                        className="text-red-500 cursor-pointer"
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
               <div ref={messagesEndRef} />
             </div>
+
             <div className="flex mt-4">
               <input
                 type="text"
@@ -202,9 +260,10 @@ function NativeHome() {
                 onClick={sendMessage}
                 className="ml-2 bg-blue-500 text-white px-4 py-2 rounded-lg"
               >
-                Send
+                {editMode ? "Update" : "Send"}
               </button>
             </div>
+
             <button
               className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg"
               onClick={() => setChatModalOpen(false)}

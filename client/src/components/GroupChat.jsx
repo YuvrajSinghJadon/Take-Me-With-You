@@ -77,7 +77,7 @@ const GroupChat = ({ roomId }) => {
         });
         setEditMode(null);
       } else {
-        socket.emit("sendMessage", {
+        socket.emit("sendGroupMessage", {
           message,
           groupId: roomId,
           senderId: user._id,

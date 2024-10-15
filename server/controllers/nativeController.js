@@ -397,6 +397,32 @@ export const getNativeConversations = async (req, res) => {
   }
 };
 
+//get conversation details
+export const getConversationDetails = async (req, res) => {
+  const { conversationId } = req.params;
+
+  try {
+    const conversation = await Conversation.findById(conversationId)
+      .populate({
+        path: "nativeId",
+        populate: {
+          path: "user",
+          select: "firstName lastName profileUrl", // Select specific user fields
+        },
+      })
+      .populate("travellerId", "firstName lastName profileUrl") // Populate travellerId
+      .populate("lastMessage"); // Populate lastMessage if it's a reference
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    res.status(200).json(conversation);
+  } catch (error) {
+    console.error("Error fetching conversation:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
 //get all messages of a conversation
 export const getMessagesByConversationId = async (req, res) => {
   const { conversationId } = req.params; // Get conversationId from the request params
@@ -405,7 +431,7 @@ export const getMessagesByConversationId = async (req, res) => {
     // Find messages with the matching conversationId
     const messages = await DirectMessage.find({ conversationId })
       .sort({ timestamp: 1 }) // Sort messages by timestamp in ascending order
-      .populate("senderId", "firstName lastName profileUrl"); // Populate sender info if needed
+      .populate("sender", "firstName lastName profileUrl"); // Populate sender info if needed
 
     if (!messages) {
       return res
@@ -420,5 +446,22 @@ export const getMessagesByConversationId = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Server error. Could not fetch messages." });
+  }
+};
+
+//get all messagse of a traveller
+// Controller to get all conversations for a traveller
+export const getTravellerConversations = async (req, res) => {
+  const travellerId = req.params.travellerId;
+  try {
+    const conversations = await Conversation.find({ travellerId })
+      .populate("nativeId", "firstName profileUrl")
+      .populate("lastMessage")
+      .sort({ updatedAt: -1 });
+
+    res.status(200).json(conversations);
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    res.status(500).json({ message: "Server error", error });
   }
 };

@@ -5,7 +5,7 @@ const directConversationSchema = new mongoose.Schema(
   {
     nativeId: {
       type: Schema.Types.ObjectId,
-      ref: "Users", // Reference to the native user
+      ref: "Natives", // Reference to the native user
       required: true,
     },
     travellerId: {

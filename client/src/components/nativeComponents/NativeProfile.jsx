@@ -1,6 +1,3 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
 import {
   fetchNativeProfile,
   startConversation,
@@ -8,32 +5,30 @@ import {
   deleteMessage,
   submitReview,
 } from "../../api/nativeApis.js";
-import {
-  FaRegStar,
-  FaStar,
-  FaPaperclip,
-  FaSmile,
-  FaEdit,
-  FaTrashAlt,
-} from "react-icons/fa";
-import { io } from "socket.io-client"; // Import Socket.io
+import React, { useState, useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
+import { useSelector } from "react-redux";
+import axios from "axios";
+import { FaEdit, FaTrashAlt, FaRegStar, FaStar } from "react-icons/fa";
+import { io } from "socket.io-client";
 import moment from "moment";
 
 const NativeProfile = () => {
   const { nativeId } = useParams();
+  const { user, token } = useSelector((state) => state.user);
   const [nativeData, setNativeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isChatOpen, setIsChatOpen] = useState(false); // For chat modal
-  const [messages, setMessages] = useState([]); // Messages state
-  const [message, setMessage] = useState(""); // Input message
+  const [messages, setMessages] = useState([]);
+  const [message, setMessage] = useState("");
+  const [editMode, setEditMode] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
   const [typingStatus, setTypingStatus] = useState("");
-  const [conversationId, setConversationId] = useState(null); // Store conversationId
   const messagesEndRef = useRef(null);
   const [isReviewOpen, setIsReviewOpen] = useState(false); // For review modal
   const [rating, setRating] = useState(0); // Star rating
   const [reviewText, setReviewText] = useState(""); // Review text
-  const { token, user } = useSelector((state) => state.user);
   const socketRef = useRef(null); // Use ref to avoid socket reinitialization
 
   // Fetch native profile
@@ -51,64 +46,62 @@ const NativeProfile = () => {
     loadNativeProfile();
   }, [nativeId, token]);
   console.log("nativeData", nativeData);
-  // Initialize socket and join the conversation room when chat opens
+
+  // Load messages for the selected conversation
+  const loadMessages = async () => {
+    try {
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_API_URL
+        }/natives/conversations/messages/${conversationId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessages(response.data || []);
+      scrollToBottom(); // Scroll to the latest message
+    } catch (error) {
+      console.error("Failed to load messages:", error);
+    }
+  };
+
+  // Socket initialization and event handling
   useEffect(() => {
     if (isChatOpen && conversationId) {
-      // Initialize socket
       socketRef.current = io(
         import.meta.env.MODE === "development"
           ? "http://localhost:8800"
           : "https://take-me-with-you.onrender.com"
       );
 
-      // Join the conversation room
       socketRef.current.emit("joinConversation", {
         conversationId,
         userId: user._id,
       });
 
-      // Listen for incoming messages
       socketRef.current.on("receiveMessage", (newMessage) => {
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
+        setMessages((prev) => [...prev, newMessage]);
         scrollToBottom();
       });
 
-      // Listen for edited messages
       socketRef.current.on("messageEdited", (updatedMessage) => {
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
+        setMessages((prev) =>
+          prev.map((msg) =>
             msg._id === updatedMessage._id ? updatedMessage : msg
           )
         );
       });
 
-      // Listen for deleted messages
       socketRef.current.on("messageDeleted", (messageId) => {
-        setMessages((prevMessages) =>
-          prevMessages.filter((msg) => msg._id !== messageId)
-        );
+        setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
       });
 
-      // Load chat history
-      socketRef.current.on("loadMessages", (chatHistory) => {
-        setMessages(chatHistory);
-        scrollToBottom();
-      });
-
-      // Typing indicator
-      socketRef.current.on("typing", (data) => {
-        setTypingStatus(data ? `${data} is typing...` : "");
-      });
-
-      // Cleanup function when component unmounts or chat closes
+      // Load messages when chat opens
+      loadMessages();
       return () => {
-        if (socketRef.current) {
-          socketRef.current.disconnect();
-          socketRef.current = null;
-        }
+        socketRef.current.disconnect();
+        socketRef.current = null;
       };
     }
-  }, [isChatOpen, conversationId, user._id]);
+  }, [isChatOpen, conversationId]);
 
   // Handle enquiry and start conversation
   const handleEnquiry = async () => {
@@ -128,16 +121,22 @@ const NativeProfile = () => {
 
   // Send message
   const sendMessage = () => {
-    if (!socketRef.current) {
-      console.error("Socket not initialized.");
-      return;
-    }
-    if (message && user?._id && conversationId) {
-      socketRef.current.emit("sendMessage", {
-        conversationId,
+    if (message.trim()) {
+      const eventData = {
         message,
+        conversationId,
         senderId: user._id,
-      });
+      };
+
+      if (editMode) {
+        eventData.messageId = editMode;
+        eventData.newMessageContent = message;
+        socketRef.current.emit("editDirectMessage", eventData);
+        setEditMode(null);
+      } else {
+        socketRef.current.emit("sendDirectMessage", eventData);
+      }
+      scrollToBottom();
       setMessage("");
     }
   };
@@ -151,40 +150,22 @@ const NativeProfile = () => {
   };
 
   // Edit message
-  const handleEdit = async (messageId, currentMessage) => {
-    if (!socketRef.current) {
-      console.error("Socket not initialized.");
-      return;
-    }
-    const newMessageContent = prompt("Edit your message", currentMessage);
-    if (newMessageContent && newMessageContent !== currentMessage) {
-      try {
-        await editMessage(messageId, newMessageContent, token);
-        socketRef.current.emit("editMessage", {
-          messageId,
-          newMessageContent,
-        });
-      } catch (error) {
-        console.error("Failed to edit message:", error);
-      }
-    }
+  const handleEdit = (messageId, currentMessage) => {
+    setMessage(currentMessage);
+    setEditMode(messageId);
   };
 
-  // Delete message
-  const handleDelete = async (messageId) => {
-    if (!socketRef.current) {
-      console.error("Socket not initialized.");
-      return;
-    }
-    if (window.confirm("Are you sure you want to delete this message?")) {
-      try {
-        await deleteMessage(messageId, token);
-        socketRef.current.emit("deleteMessage", { messageId, conversationId });
-      } catch (error) {
-        console.error("Failed to delete message:", error);
-      }
-    }
+  const handleDelete = (messageId) => {
+    socketRef.current.emit("deleteMessage", { messageId, conversationId });
   };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!nativeData) return <div>No data found.</div>;
 
   // Handle Review Submission
   const handleSubmitReview = async () => {
@@ -219,11 +200,8 @@ const NativeProfile = () => {
       </span>
     ));
   };
-  // Scroll to the latest message
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
+  console.log("conversatoinId", conversationId);
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
   if (!nativeData) return <div>Native not found</div>;
@@ -408,96 +386,54 @@ const NativeProfile = () => {
       {/* Chat Modal */}
       {isChatOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-4xl">
-            {/* Chat Header */}
-            <div className="bg-blue-500 text-white p-4 rounded-t-lg flex justify-between items-center">
-              <h2 className="text-lg font-bold">
-                Direct Chat with {nativeData.name}
-              </h2>
-              <button
-                className="text-white"
-                onClick={() => setIsChatOpen(false)}
-              >
-                ❌
-              </button>
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+            <div className="bg-blue-500 text-white p-2 rounded-t-lg flex justify-between items-center">
+              <h2 className="text-xl font-bold mb-4">Chat</h2>
+               <button onClick={() => setIsChatOpen(false)}>❌</button>
             </div>
-
-            {/* Messages List */}
-            <div
-              className="flex-1 overflow-y-auto p-4 space-y-4"
-              style={{ maxHeight: "300px" }}
-            >
-              {messages.length > 0 ? (
-                <>
-                  {messages.map((msg, index) => {
-                    const isSameUser =
-                      msg.sender && msg.sender._id === user._id;
-                    return (
-                      <div
-                        key={msg._id || index}
-                        className={`flex ${
-                          isSameUser ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        <div
-                          className={`p-3 rounded-lg max-w-xs shadow-md ${
-                            isSameUser
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-200 text-black"
-                          }`}
-                        >
-                          <p className="text-sm">{msg.message}</p>
-                          <span className="block text-xs opacity-75 mt-1">
-                            {moment(msg.createdAt).fromNow()}
-                          </span>
-
-                          {isSameUser && (
-                            <div className="flex justify-end mt-2">
-                              <FaEdit
-                                className="text-white cursor-pointer mr-2"
-                                onClick={() => handleEdit(msg._id, msg.message)}
-                              />
-                              <FaTrashAlt
-                                className="text-white cursor-pointer"
-                                onClick={() => handleDelete(msg._id)}
-                              />
-                            </div>
-                          )}
-                        </div>
+            <div className="max-h-80 overflow-y-auto">
+              {messages.map((msg) => (
+                <div
+                  key={msg._id}
+                  className={`flex ${
+                    msg.sender._id === user._id
+                      ? "justify-end"
+                      : "justify-start"
+                  } mb-2`}
+                >
+                  <div className="p-3 rounded-lg bg-gray-200 max-w-xs">
+                    <p>{msg.message}</p>
+                    {msg.sender._id === user._id && (
+                      <div className="flex space-x-2 mt-1">
+                        <FaEdit
+                          onClick={() => handleEdit(msg._id, msg.message)}
+                          className="text-blue-500 cursor-pointer"
+                        />
+                        <FaTrashAlt
+                          onClick={() => handleDelete(msg._id)}
+                          className="text-red-500 cursor-pointer"
+                        />
                       </div>
-                    );
-                  })}
-                </>
-              ) : (
-                <p className="text-center text-gray-500">No messages yet...</p>
-              )}
+                    )}
+                  </div>
+                </div>
+              ))}
               <div ref={messagesEndRef} />
-            </div>
-
-            {/* Typing Indicator */}
-            {typingStatus && (
-              <div className="p-2 text-xs text-gray-400">{typingStatus}</div>
-            )}
-
-            {/* Message Input */}
-            <div className="bg-white dark:bg-gray-700 p-4 rounded-b-lg flex items-center space-x-4">
-              <button className="text-gray-500 hover:text-gray-700">
-                <FaSmile size={20} />
-              </button>
-              <input
-                type="text"
-                className="flex-1 bg-gray-200 dark:bg-gray-600 text-black dark:text-white p-3 rounded-lg focus:outline-none"
-                value={message}
-                onChange={handleTyping}
-                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Type a message..."
-              />
-              <button
-                className="bg-blue-500 text-white p-3 rounded-lg shadow hover:bg-blue-600"
-                onClick={sendMessage}
-              >
-                Send
-              </button>
+              <div className="flex mt-4">
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="flex-1 p-2 border rounded-lg"
+                  placeholder="Type a message..."
+                />
+                <button
+                  onClick={sendMessage}
+                  className="ml-2 bg-blue-500 text-white px-4 py-2 rounded-lg"
+                >
+                  {editMode ? "Update" : "Send"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -42,7 +42,7 @@ export const groupChatSocketEvents = (socket, io) => {
   });
 
   // Send Message in Group
-  socket.on("sendMessage", async ({ groupId, message, senderId }) => {
+  socket.on("sendGroupMessage", async ({ groupId, message, senderId }) => {
     try {
       const newMessage = await Message.create({
         groupId,

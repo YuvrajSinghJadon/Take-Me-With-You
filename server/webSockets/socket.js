@@ -17,7 +17,7 @@ export const initializeSocket = (server) => {
     // Initialize  group ,direct chat and post socket events
     groupChatSocketEvents(socket, io);
     directMessageSocketEvents(socket, io);
-    postSocketEvents(socket, io); 
+    postSocketEvents(socket, io);
 
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);

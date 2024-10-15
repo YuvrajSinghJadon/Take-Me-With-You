@@ -4,21 +4,21 @@ import DirectConversation from "../models/directConversationModel.js";
 
 export const directMessageSocketEvents = (socket, io) => {
   // Join Direct Conversation
-  socket.on("joinConversation", async ({ conversationId, userId }) => {
+  socket.on("joinConversation", async ({ conversationId }) => {
     try {
       socket.join(conversationId);
-      const messages = await DirectMessage.find({ conversationId })
-        .populate("sender", "firstName lastName")
-        .sort({ createdAt: 1 });
+      // const messages = await DirectMessage.find({ conversationId })
+      //   .populate("sender", "firstName lastName")
+      //   .sort({ createdAt: 1 });
 
-      socket.emit("loadMessages", messages);
+      // socket.emit("loadMessages", messages);
     } catch (error) {
       console.error("Error joining conversation:", error);
     }
   });
 
   // Send Direct Message
-  socket.on("sendMessage", async ({ conversationId, message, senderId }) => {
+  socket.on("sendDirectMessage", async ({ conversationId, message, senderId }) => {
     try {
       console.log("Server received 'sendMessage' event:", {
         conversationId,
@@ -44,7 +44,7 @@ export const directMessageSocketEvents = (socket, io) => {
       console.error("Error sending message:", error);
     }
   });
-  socket.on("editMessage", async ({ messageId, newMessageContent }) => {
+  socket.on("editDirectMessage", async ({ messageId, newMessageContent }) => {
     try {
       const updatedMessage = await DirectMessage.findByIdAndUpdate(
         messageId,
