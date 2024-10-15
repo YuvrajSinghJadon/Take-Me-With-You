@@ -1,49 +1,45 @@
-//socket implementation for direct messages
+// directChatSocket.js
 import DirectMessage from "../models/directMessageModel.js";
 import DirectConversation from "../models/directConversationModel.js";
 
 export const directMessageSocketEvents = (socket, io) => {
   // Join Direct Conversation
-  socket.on("joinConversation", async ({ conversationId }) => {
+  socket.on("joinDirectConversation", async ({ conversationId }) => {
     try {
       socket.join(conversationId);
-      // const messages = await DirectMessage.find({ conversationId })
-      //   .populate("sender", "firstName lastName")
-      //   .sort({ createdAt: 1 });
-
-      // socket.emit("loadMessages", messages);
+      console.log(`User joined direct conversation: ${conversationId}`);
     } catch (error) {
       console.error("Error joining conversation:", error);
     }
   });
 
   // Send Direct Message
-  socket.on("sendDirectMessage", async ({ conversationId, message, senderId }) => {
-    try {
-      console.log("Server received 'sendMessage' event:", {
-        conversationId,
-        message,
-        senderId,
-      });
-      const newMessage = await DirectMessage.create({
-        conversationId,
-        sender: senderId,
-        message,
-      });
+  socket.on(
+    "sendDirectMessage",
+    async ({ conversationId, message, senderId }) => {
+      try {
+        const newMessage = await DirectMessage.create({
+          conversationId,
+          sender: senderId,
+          message,
+        });
 
-      const populatedMessage = await DirectMessage.findById(newMessage._id)
-        .populate("sender", "firstName lastName _id")
-        .exec();
+        const populatedMessage = await DirectMessage.findById(newMessage._id)
+          .populate("sender", "firstName lastName _id")
+          .exec();
 
-      // Update the lastMessage field in the conversation
-      await DirectConversation.findByIdAndUpdate(conversationId, {
-        lastMessage: newMessage._id,
-      });
-      io.to(conversationId).emit("receiveMessage", populatedMessage);
-    } catch (error) {
-      console.error("Error sending message:", error);
+        await DirectConversation.findByIdAndUpdate(conversationId, {
+          lastMessage: newMessage._id,
+        });
+
+        io.to(conversationId).emit("receiveDirectMessage", populatedMessage);
+      } catch (error) {
+        console.error("Error sending direct message:", error);
+      }
     }
-  });
+  );
+
+  // Edit Direct Message
   socket.on("editDirectMessage", async ({ messageId, newMessageContent }) => {
     try {
       const updatedMessage = await DirectMessage.findByIdAndUpdate(
@@ -53,20 +49,21 @@ export const directMessageSocketEvents = (socket, io) => {
       ).populate("sender", "firstName lastName");
 
       io.to(updatedMessage.conversationId.toString()).emit(
-        "messageEdited",
+        "directMessageEdited",
         updatedMessage
       );
     } catch (error) {
-      console.error("Error editing message:", error);
+      console.error("Error editing direct message:", error);
     }
   });
 
-  socket.on("deleteMessage", async ({ messageId, conversationId }) => {
+  // Delete Direct Message
+  socket.on("deleteDirectMessage", async ({ messageId, conversationId }) => {
     try {
       await DirectMessage.findByIdAndDelete(messageId);
-      io.to(conversationId).emit("messageDeleted", messageId);
+      io.to(conversationId).emit("directMessageDeleted", messageId);
     } catch (error) {
-      console.error("Error deleting message:", error);
+      console.error("Error deleting direct message:", error);
     }
   });
 };

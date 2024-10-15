@@ -1,3 +1,4 @@
+// groupChatSocket.js
 import Group from "../models/Groups.js";
 import Message from "../models/messageModel.js";
 
@@ -9,12 +10,12 @@ export const groupChatSocketEvents = (socket, io) => {
       io.emit("groupCreated", newGroup);
     } catch (error) {
       console.error("Error creating group:", error);
-      socket.emit("error", "Failed to create group.");
+      socket.emit("groupError", "Failed to create group.");
     }
   });
 
   // Join Group Room
-  socket.on("joinRoom", async ({ roomId, userId }) => {
+  socket.on("joinGroupRoom", async ({ roomId, userId }) => {
     try {
       socket.join(roomId);
       const group = await Group.findById(roomId).populate({
@@ -23,7 +24,7 @@ export const groupChatSocketEvents = (socket, io) => {
       });
 
       if (!group) {
-        socket.emit("error", "Group not found.");
+        socket.emit("groupError", "Group not found.");
         return;
       }
 
@@ -31,11 +32,11 @@ export const groupChatSocketEvents = (socket, io) => {
         (groupUser) => groupUser.toString() === userId
       );
       if (!isUserInGroup) {
-        socket.emit("accessDenied", "You are not a member of this group.");
+        socket.emit("groupAccessDenied", "You are not a member of this group.");
         return;
       }
 
-      socket.emit("loadMessages", group.messages);
+      socket.emit("loadGroupMessages", group.messages);
     } catch (error) {
       console.error("Error joining group:", error);
     }
@@ -49,48 +50,48 @@ export const groupChatSocketEvents = (socket, io) => {
         sender: senderId,
         message,
       });
-      const group = await Group.findById(groupId);
-
-      if (!group.users.includes(senderId)) {
-        socket.emit("accessDenied", "You are no longer a member of this group.");
-        return;
-      }
 
       const populatedMessage = await Message.findById(newMessage._id).populate(
         "sender",
         "firstName lastName"
       );
+
       await Group.findByIdAndUpdate(groupId, {
         $push: { messages: newMessage._id },
       });
-      io.to(groupId).emit("receiveMessage", populatedMessage);
+
+      io.to(groupId).emit("receiveGroupMessage", populatedMessage);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Error sending group message:", error);
     }
   });
 
-  // Edit Message
-  socket.on("editMessage", async ({ messageId, message, groupId }) => {
+  // Edit Group Message
+  socket.on("editGroupMessage", async ({ messageId, message, groupId }) => {
     try {
       const updatedMessage = await Message.findByIdAndUpdate(
         messageId,
         { message },
         { new: true }
       ).populate("sender", "firstName lastName");
-      io.to(groupId).emit("messageEdited", updatedMessage);
+
+      io.to(groupId).emit("groupMessageEdited", updatedMessage);
     } catch (error) {
-      console.error("Error editing message:", error);
+      console.error("Error editing group message:", error);
     }
   });
 
-  // Delete Message
-  socket.on("deleteMessage", async ({ messageId, groupId }) => {
+  // Delete Group Message
+  socket.on("deleteGroupMessage", async ({ messageId, groupId }) => {
     try {
       await Message.findByIdAndDelete(messageId);
-      await Group.findByIdAndUpdate(groupId, { $pull: { messages: messageId } });
-      io.to(groupId).emit("messageDeleted", messageId);
+      await Group.findByIdAndUpdate(groupId, {
+        $pull: { messages: messageId },
+      });
+
+      io.to(groupId).emit("groupMessageDeleted", messageId);
     } catch (error) {
-      console.error("Error deleting message:", error);
+      console.error("Error deleting group message:", error);
     }
   });
 };

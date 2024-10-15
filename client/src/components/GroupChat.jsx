@@ -3,6 +3,7 @@ import { io } from "socket.io-client";
 import { useSelector } from "react-redux";
 import moment from "moment";
 import { FaPaperclip, FaSmile, FaEdit, FaTrashAlt } from "react-icons/fa";
+import { IoSend } from "react-icons/io5";
 
 const socket = io(
   import.meta.env.MODE === "development"
@@ -19,27 +20,24 @@ const GroupChat = ({ roomId }) => {
   const messagesEndRef = useRef(null);
   const [isChatAccessible, setIsChatAccessible] = useState(true);
 
-  // Use socket connection and load messages when the component mounts
   useEffect(() => {
-    socket.emit("joinRoom", { roomId, userId: user._id });
+    socket.emit("joinGroupRoom", { roomId, userId: user._id });
 
-    // Register socket listeners
-    socket.on("receiveMessage", handleNewMessage);
-    socket.on("loadMessages", handleLoadMessages);
-    socket.on("accessDenied", handleAccessDenied);
-    socket.on("messageDeleted", handleMessageDeleted);
-    socket.on("messageEdited", handleMessageEdited);
+    socket.on("receiveGroupMessage", handleNewMessage);
+    socket.on("loadGroupMessages", handleLoadMessages);
+    socket.on("groupAccessDenied", handleAccessDenied);
+    socket.on("groupMessageDeleted", handleMessageDeleted);
+    socket.on("groupMessageEdited", handleMessageEdited);
     socket.on("typing", handleTypingStatus);
 
-    // Cleanup function to avoid duplicate listeners
     return () => {
-      socket.off("receiveMessage", handleNewMessage);
-      socket.off("loadMessages", handleLoadMessages);
-      socket.off("accessDenied", handleAccessDenied);
-      socket.off("messageDeleted", handleMessageDeleted);
-      socket.off("messageEdited", handleMessageEdited);
+      socket.off("receiveGroupMessage", handleNewMessage);
+      socket.off("loadGroupMessages", handleLoadMessages);
+      socket.off("groupAccessDenied", handleAccessDenied);
+      socket.off("groupMessageDeleted", handleMessageDeleted);
+      socket.off("groupMessageEdited", handleMessageEdited);
       socket.off("typing", handleTypingStatus);
-      socket.emit("leaveRoom", roomId);
+      socket.emit("leaveGroupRoom", roomId);
     };
   }, [roomId, user._id]);
 
@@ -75,21 +73,16 @@ const GroupChat = ({ roomId }) => {
   const handleTypingStatus = (data) => {
     setTypingStatus(data ? `${data} is typing...` : "");
   };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const sendMessage = () => {
     if (message.trim()) {
-      const newMessage = {
-        message,
-        groupId: roomId,
-        senderId: user._id,
-      };
+      const newMessage = { message, groupId: roomId, senderId: user._id };
 
       if (editMode) {
-        socket.emit("editMessage", {
+        socket.emit("editGroupMessage", {
           messageId: editMode,
           message,
           groupId: roomId,
@@ -98,11 +91,10 @@ const GroupChat = ({ roomId }) => {
       } else {
         socket.emit("sendGroupMessage", newMessage);
       }
-      setMessage(""); // Clear the input field
+      setMessage("");
       scrollToBottom();
     }
   };
-
   const handleTyping = (e) => {
     setMessage(e.target.value);
     socket.emit("typing", user.firstName);
@@ -114,7 +106,7 @@ const GroupChat = ({ roomId }) => {
   };
 
   const handleDelete = (messageId) => {
-    socket.emit("deleteMessage", { messageId, groupId: roomId });
+    socket.emit("deleteGroupMessage", { messageId, groupId: roomId });
   };
 
   const renderDateGroup = (date) => {
@@ -218,7 +210,7 @@ const GroupChat = ({ roomId }) => {
               className="bg-blue-500 text-white p-3 rounded-lg shadow hover:bg-blue-600"
               onClick={sendMessage}
             >
-              Send
+              <IoSend size={20} />
             </button>
           </div>
         </>

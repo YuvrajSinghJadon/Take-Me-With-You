@@ -12,6 +12,8 @@ import {
   UpdateProfileModal,
 } from "../components/nativeComponents";
 import { FaEdit, FaTrashAlt } from "react-icons/fa";
+import { IoSend, IoPencil } from "react-icons/io5";
+
 function NativeHome() {
   const { user, token } = useSelector((state) => state.user);
   const [nativeData, setNativeData] = useState(null);
@@ -121,7 +123,7 @@ function NativeHome() {
   };
   // Delete a message
   const deleteMessage = (messageId) => {
-    socketRef.current.emit("deleteMessage", {
+    socketRef.current.emit("deleteDirectMessage", {
       messageId,
       conversationId: selectedConversation,
     });
@@ -136,31 +138,31 @@ function NativeHome() {
   useEffect(() => {
     if (!selectedConversation) return;
 
-    socketRef.current.emit("joinConversation", {
+    socketRef.current.emit("joinDirectConversation", {
       conversationId: selectedConversation,
     });
 
-    socketRef.current.on("receiveMessage", (newMessage) => {
+    socketRef.current.on("receiveDirectMessage", (newMessage) => {
       setMessages((prev) => [...prev, newMessage]); // Add new message to state
       scrollToBottom(); // Keep chat scrolled to the bottom
     });
     // Handle edited messages
-    socketRef.current.on("messageEdited", (updatedMessage) => {
+    socketRef.current.on("directMessageEdited", (updatedMessage) => {
       setMessages((prev) =>
         prev.map((msg) =>
           msg._id === updatedMessage._id ? updatedMessage : msg
         )
       );
     });
-    socketRef.current.on("messageDeleted", (messageId) => {
+    socketRef.current.on("directMessageDeleted", (messageId) => {
       setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
     });
 
     return () => {
-      socketRef.current.emit("leaveConversation", selectedConversation);
-      socketRef.current.off("receiveMessage");
-      socketRef.current.off("messageEdited"); // Clean up edited message event
-      socketRef.current.off("messageDeleted");
+      socketRef.current.emit("leaveDirectConversation", selectedConversation);
+      socketRef.current.off("receiveDirectMessage");
+      socketRef.current.off("directMessageEdited");
+      socketRef.current.off("directMessageDeleted");
     };
   }, [selectedConversation]);
 
@@ -253,6 +255,7 @@ function NativeHome() {
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && sendMessage()} // Send on Enter key
                 className="flex-1 p-2 border rounded-lg"
                 placeholder="Type a message..."
               />
@@ -260,7 +263,8 @@ function NativeHome() {
                 onClick={sendMessage}
                 className="ml-2 bg-blue-500 text-white px-4 py-2 rounded-lg"
               >
-                {editMode ? "Update" : "Send"}
+                {editMode ? <IoPencil size={20} /> : <IoSend size={20} />}{" "}
+                {/* Icon button */}
               </button>
             </div>
 
